@@ -58,7 +58,7 @@ export class AdvancedCodeExplainer {
     if (/\*\w+|\w+\*/.test(this.code)) features.push('Pointer operations')
     if (/\w+\[\w*\]/.test(this.code)) features.push('Array usage')
     if (/(for|while|do)\s*\(/.test(this.code)) features.push('Loops')
-    if /(if|else|switch)\s*\(/.test(this.code)) features.push('Conditional logic')
+    if (/(if|else|switch)\s*\(/.test(this.code)) features.push('Conditional logic')
     if (/\w+\s+\w+\s*\([^)]*\)\s*\{/.test(this.code)) features.push('Function definitions')
 
     // Determine complexity
@@ -128,9 +128,6 @@ export class AdvancedCodeExplainer {
     
     // Analyze arrays
     components.push(...this.analyzeArrays())
-    
-    // Analyze pointers
-    components.push(...this.analyzePointers())
     
     // Analyze loops
     components.push(...this.analyzeLoops())
@@ -335,30 +332,6 @@ export class AdvancedCodeExplainer {
     return arrays
   }
 
-  private analyzePointers(): CodeComponent[] {
-    const pointers: CodeComponent[] = []
-    const pointerRegex = /(\w+)\s*\*+\s*(\w+)/g
-    let match
-
-    while ((match = pointerRegex.exec(this.code)) !== null) {
-      const type = match[1]
-      const name = match[2]
-
-      let description = `Pointer "${name}" stores the memory address of a ${type} variable. `
-      description += 'Pointers enable indirect access to data, dynamic memory allocation, and efficient parameter passing. '
-      description += 'They are powerful but require careful handling to avoid memory errors like segmentation faults.'
-
-      pointers.push({
-        type: 'pointer',
-        title: `*${name} (${type} pointer)`,
-        description,
-        codeSnippet: match[0]
-      })
-    }
-
-    return pointers
-  }
-
   private analyzeLoops(): CodeComponent[] {
     const loops: CodeComponent[] = []
     
@@ -369,7 +342,7 @@ export class AdvancedCodeExplainer {
       loops.push({
         type: 'loop',
         title: 'For Loop',
-        description: 'A for loop provides a compact way to iterate with initialization, condition, and increment/decrement in one line. It\'s ideal for counting loops where you know the number of iterations in advance.',
+        description: 'A for loop provides a compact way to iterate with initialization, condition, and increment/decrement in one line. It is ideal for counting loops where you know the number of iterations in advance.',
         codeSnippet: match[0],
         complexity: 'Moderate'
       })
@@ -381,7 +354,7 @@ export class AdvancedCodeExplainer {
       loops.push({
         type: 'loop',
         title: 'While Loop',
-        description: 'A while loop continues executing as long as the condition remains true. It\'s perfect for situations where the number of iterations is not known beforehand and depends on runtime conditions.',
+        description: 'A while loop continues executing as long as the condition remains true. It is perfect for situations where the number of iterations is not known beforehand and depends on runtime conditions.',
         codeSnippet: match[0],
         complexity: 'Moderate'
       })
