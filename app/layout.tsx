@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   title: 'CodeAnatomy - C Program Visualizer',
   description: 'Interactive visualizer for C programs, memory, and data structures',
   viewport: 'width=device-width, initial-scale=1',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/codeanatomy_logo.png',
+  },
 }
 
 export default function RootLayout({
