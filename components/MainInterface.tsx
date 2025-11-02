@@ -37,6 +37,18 @@ export default function MainInterface() {
       clearBtn.addEventListener('click', handleClearCode)
     }
 
+    // Source Code button functionality
+    const sourceBtn = document.getElementById('source-btn')
+    if (sourceBtn) {
+      sourceBtn.addEventListener('click', handleSourceCode)
+    }
+
+    // Help button functionality
+    const helpBtn = document.getElementById('help-btn')
+    if (helpBtn) {
+      helpBtn.addEventListener('click', handleHelp)
+    }
+
     // Example button functionality
     const exampleBtn = document.getElementById('example-btn')
     if (exampleBtn) {
@@ -98,6 +110,41 @@ export default function MainInterface() {
     updateStatus('ready', 'Ready')
     resetMemoryStats()
     updateAnalysisTime(0)
+  }
+
+  const handleSourceCode = () => {
+    window.open('https://github.com/viktorexe/codeanatomy', '_blank')
+  }
+
+  const handleHelp = () => {
+    const explanationCards = document.getElementById('explanation-cards')
+    const summaryText = document.getElementById('summary-text')
+    
+    if (summaryText) {
+      summaryText.textContent = 'How to Use CodeAnatomy'
+    }
+    
+    if (explanationCards) {
+      const helpContent = `
+        <div class="explanation-item">
+          <div class="explanation-title">Step 1: Paste Your C Code</div>
+          <div class="explanation-text">Copy and paste any C program into the code editor on the left side.</div>
+        </div>
+        <div class="explanation-item">
+          <div class="explanation-title">Step 2: Click Explain Code</div>
+          <div class="explanation-text">Press the "Explain Code" button to get detailed analysis of your program.</div>
+        </div>
+        <div class="explanation-item">
+          <div class="explanation-title">Step 3: Learn from Analysis</div>
+          <div class="explanation-text">Read the explanations to understand algorithms, data structures, complexity, and best practices.</div>
+        </div>
+        <div class="explanation-item">
+          <div class="explanation-title">What You'll Learn</div>
+          <div class="explanation-text">• Algorithm patterns (BST, sorting, searching)\n• Time & space complexity analysis\n• Memory management techniques\n• Recursive design principles\n• Programming best practices</div>
+        </div>
+      `
+      explanationCards.innerHTML = helpContent
+    }
   }
 
   const handleLoadExample = () => {

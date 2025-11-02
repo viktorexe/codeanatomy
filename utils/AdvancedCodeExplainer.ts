@@ -29,297 +29,267 @@ export class AdvancedCodeExplainer {
     }
 
     return {
-      summary: this.generateAdvancedSummary(),
-      explanations: this.generateAdvancedExplanations(),
+      summary: this.analyzePurpose(),
+      explanations: this.generateExplanations(),
       memoryUsage: this.estimateMemoryUsage()
     }
   }
 
-  private generateAdvancedSummary(): string {
-    const codeFlat = this.code.replace(/\n/g, ' ')
+  private analyzePurpose(): string {
+    // Analyze what the program actually does based on main()
+    const mainMatch = this.code.match(/int\s+main\s*\([^)]*\)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/s)
+    if (!mainMatch) return "Program structure without main function."
+
+    const mainBody = mainMatch[1]
     
-    // Detect algorithm patterns
-    const isBST = /typedef struct.*Node.*left.*right/.test(codeFlat) && /insert.*root.*value/.test(codeFlat)
-    const isLinkedList = /typedef struct.*Node.*next/.test(codeFlat)
-    const isRecursive = /(\w+)\s*\([^)]*\).*\1\s*\(/.test(codeFlat)
-    const hasTraversal = /inorder|preorder|postorder|traverse/i.test(this.code)
-    const hasSorting = /sort|bubble|quick|merge|selection/i.test(this.code)
-    const hasSearching = /search|find|binary.*search/i.test(this.code)
-    const hasDP = /dp\[|memo\[|dynamic.*programming/i.test(this.code)
+    // Check actual operations in main
+    const hasInsert = /insert\s*\(/.test(mainBody)
+    const hasTraversal = /inorder\s*\(|preorder\s*\(|postorder\s*\(/.test(mainBody)
+    const hasPrint = /printf\s*\(/.test(mainBody)
+    const hasLoop = /for\s*\(|while\s*\(/.test(mainBody)
+    const hasFree = /free\s*\(/.test(mainBody)
+    const hasArray = /\[\s*\d+\s*\]/.test(mainBody)
     
-    if (isBST) {
-      return "This implements a Binary Search Tree (BST) - a hierarchical data structure where each node has at most two children, with left children smaller and right children larger than the parent. BSTs provide O(log n) average-case search, insertion, and deletion operations."
+    let purpose = ""
+    
+    if (hasInsert && hasTraversal) {
+      purpose = "Builds a binary search tree by inserting values and performs inorder traversal to display sorted output."
+    } else if (hasInsert) {
+      purpose = "Creates and populates a data structure through insertion operations."
+    } else if (hasLoop && hasArray) {
+      purpose = "Processes array elements using loops."
+    } else if (hasPrint) {
+      purpose = "Displays output to console."
+    } else {
+      purpose = "Executes a sequence of operations defined in main function."
     }
     
-    if (isLinkedList) {
-      return "This implements a Linked List - a linear data structure where elements are stored in nodes connected via pointers. Unlike arrays, linked lists allow dynamic memory allocation and efficient insertion/deletion at any position."
-    }
-    
-    if (hasSorting) {
-      return "This implements a sorting algorithm to arrange data in a specific order. Sorting is fundamental in computer science as it enables efficient searching and data organization."
-    }
-    
-    if (hasSearching) {
-      return "This implements a searching algorithm to find specific elements in a data structure. Efficient searching is crucial for database operations and information retrieval."
-    }
-    
-    if (hasDP) {
-      return "This uses Dynamic Programming - an optimization technique that solves complex problems by breaking them into simpler subproblems and storing results to avoid redundant calculations."
-    }
-    
-    // Default analysis
-    const hasPointers = /\*\w+/.test(this.code)
-    const hasStructs = /typedef struct|struct\s+\w+/.test(this.code)
-    const hasRecursion = isRecursive
-    
-    if (hasStructs && hasPointers && hasRecursion) {
-      return "This is an advanced C program implementing custom data structures with pointer manipulation and recursive algorithms - fundamental concepts in systems programming and algorithm design."
-    }
-    
-    return "This C program demonstrates core programming concepts including data structures, memory management, and algorithmic thinking."
+    return purpose
   }
 
-  private generateAdvancedExplanations(): ExplanationItem[] {
+  private generateExplanations(): ExplanationItem[] {
     const explanations: ExplanationItem[] = []
     
-    this.explainDataStructures(explanations)
-    this.explainAlgorithms(explanations)
-    this.explainMemoryManagement(explanations)
-    this.explainPointerConcepts(explanations)
-    this.explainRecursion(explanations)
-    this.explainComplexity(explanations)
-    this.explainBestPractices(explanations)
+    this.explainKeyComponents(explanations)
+    this.explainHowItWorks(explanations)
+    this.explainImportantConcepts(explanations)
+    this.explainComplexityAndSafety(explanations)
     
     return explanations
   }
 
-  private explainDataStructures(explanations: ExplanationItem[]): void {
-    const codeFlat = this.code.replace(/\n/g, ' ')
+  private explainKeyComponents(explanations: ExplanationItem[]): void {
+    const components: string[] = []
     
-    // Detect BST
-    if (/typedef struct.*Node.*left.*right/.test(codeFlat)) {
-      explanations.push({
-        title: "Binary Search Tree Implementation",
-        text: "This creates a BST where each node contains data and two pointers (left/right). The BST property ensures left subtree values < parent < right subtree values. This enables O(log n) operations in balanced trees, making it efficient for searching, insertion, and deletion compared to linear structures like arrays."
+    // Check for actual structs
+    const structMatches = this.code.match(/typedef\s+struct\s+\w*\s*\{[^}]+\}\s*(\w+);/g)
+    if (structMatches) {
+      structMatches.forEach(match => {
+        const nameMatch = match.match(/\}\s*(\w+);/)
+        if (nameMatch) {
+          const members = match.match(/\{([^}]+)\}/)?.[1]
+          const memberCount = members ? members.split(';').filter(m => m.trim()).length : 0
+          components.push(`${nameMatch[1]} struct (${memberCount} members)`)
+        }
       })
     }
     
-    // Detect Linked List
-    if (/typedef struct.*Node.*next/.test(codeFlat)) {
-      explanations.push({
-        title: "Linked List Structure",
-        text: "Uses a linked list where each node contains data and a pointer to the next node. Unlike arrays with fixed memory locations, linked lists use dynamic allocation, allowing efficient insertion/deletion anywhere in the list without shifting elements. Trade-off: O(1) insertion but O(n) random access."
+    // Check for actual functions (excluding main)
+    const functionMatches = this.code.match(/(\w+)\s+(\w+)\s*\([^)]*\)\s*\{/g)
+    if (functionMatches) {
+      functionMatches.forEach(match => {
+        const funcMatch = match.match(/(\w+)\s+(\w+)\s*\(/)
+        if (funcMatch && funcMatch[2] !== 'main') {
+          components.push(`${funcMatch[2]}() function`)
+        }
       })
     }
     
-    // Detect Arrays
-    if (/\w+\s+\w+\[\d*\]/.test(this.code)) {
+    // Check for arrays
+    const arrayMatches = this.code.match(/\w+\s+\w+\[\d+\]/g)
+    if (arrayMatches) {
+      arrayMatches.forEach(match => {
+        const arrMatch = match.match(/(\w+)\s+(\w+)\[(\d+)\]/)
+        if (arrMatch) {
+          components.push(`${arrMatch[2]}[${arrMatch[3]}] array`)
+        }
+      })
+    }
+    
+    if (components.length > 0) {
       explanations.push({
-        title: "Array Usage",
-        text: "Arrays provide contiguous memory storage with O(1) random access via indexing. They're cache-friendly due to spatial locality but have fixed size limitations. Perfect for scenarios requiring frequent element access by position."
+        title: "Key Components",
+        text: components.join(', ') + '.'
       })
     }
   }
 
-  private explainAlgorithms(explanations: ExplanationItem[]): void {
-    // Tree traversal
-    if (/inorder|preorder|postorder/i.test(this.code)) {
-      if (/inorder/i.test(this.code)) {
-        explanations.push({
-          title: "Inorder Traversal Algorithm",
-          text: "Inorder traversal (Left → Root → Right) visits BST nodes in sorted order. This is crucial because it leverages the BST property to output elements in ascending sequence without explicit sorting. The recursive nature elegantly handles the tree structure, making it a classic example of divide-and-conquer."
-        })
+  private explainHowItWorks(explanations: ExplanationItem[]): void {
+    const mainMatch = this.code.match(/int\s+main\s*\([^)]*\)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/s)
+    if (!mainMatch) return
+
+    const mainBody = mainMatch[1]
+    const steps: string[] = []
+    
+    // Analyze main() execution flow
+    if (/\w+\*\s+\w+\s*=\s*NULL/.test(mainBody)) {
+      steps.push("Initializes root pointer to NULL")
+    }
+    
+    if (/\w+\s+\w+\[\s*\]\s*=/.test(mainBody)) {
+      steps.push("Declares and initializes array with values")
+    }
+    
+    if (/for\s*\([^)]*\)/.test(mainBody)) {
+      const forMatch = mainBody.match(/for\s*\([^)]*\)/)
+      if (forMatch && /insert/.test(mainBody)) {
+        steps.push("Loops through array inserting each value into tree")
+      } else if (forMatch) {
+        steps.push("Iterates through elements using for loop")
       }
     }
     
-    // Insertion algorithm
-    if (/insert.*root.*value/.test(this.code.replace(/\n/g, ' '))) {
-      explanations.push({
-        title: "BST Insertion Algorithm",
-        text: "The insertion algorithm maintains BST property by recursively comparing values: go left if smaller, right if larger. This ensures the tree remains searchable. The base case (root == NULL) creates new nodes, while recursive calls build the path. Time complexity: O(log n) average, O(n) worst case (skewed tree)."
-      })
+    if (/printf.*traversal/i.test(mainBody)) {
+      steps.push("Prints traversal label")
     }
     
-    // Search patterns
-    if (/search|find/i.test(this.code)) {
+    if (/inorder\s*\(/.test(mainBody)) {
+      steps.push("Performs inorder traversal to display sorted values")
+    }
+    
+    if (/printf.*\\n/.test(mainBody)) {
+      steps.push("Prints newline for formatting")
+    }
+    
+    if (/freeTree\s*\(/.test(mainBody)) {
+      steps.push("Frees all allocated memory")
+    }
+    
+    if (/\w+\s*=\s*NULL/.test(mainBody) && /free/.test(this.code)) {
+      steps.push("Sets root to NULL preventing dangling pointer")
+    }
+    
+    if (steps.length > 0) {
       explanations.push({
-        title: "Search Algorithm",
-        text: "Implements efficient searching by leveraging data structure properties. In BSTs, binary search eliminates half the search space at each step, achieving O(log n) complexity. This is exponentially faster than linear search O(n) in unsorted data."
+        title: "How It Works",
+        text: steps.join(' → ') + '.'
       })
     }
   }
 
-  private explainMemoryManagement(explanations: ExplanationItem[]): void {
-    const hasMalloc = /malloc|calloc/.test(this.code)
-    const hasFree = /free\s*\(/.test(this.code)
+  private explainImportantConcepts(explanations: ExplanationItem[]): void {
+    const concepts: string[] = []
     
-    if (hasMalloc) {
-      explanations.push({
-        title: "Dynamic Memory Allocation",
-        text: "Uses malloc() to allocate memory on the heap at runtime. This enables creating data structures of unknown size and prevents stack overflow for large datasets. Each malloc() must be paired with free() to prevent memory leaks. The heap provides more space than the stack but requires manual management."
-      })
+    // Check for actual recursion
+    const recursiveFuncs = this.findActualRecursiveFunctions()
+    if (recursiveFuncs.length > 0) {
+      concepts.push(`Recursion in ${recursiveFuncs.join(', ')} functions`)
     }
     
-    if (hasFree) {
-      explanations.push({
-        title: "Memory Deallocation Strategy",
-        text: "Implements proper memory cleanup using free(). The postorder traversal for freeing ensures child nodes are freed before parents, preventing access to deallocated memory. Setting pointers to NULL after freeing prevents dangling pointer bugs - a common source of crashes and security vulnerabilities."
-      })
+    // Check for dynamic memory
+    if (/malloc\s*\(/.test(this.code)) {
+      concepts.push("Dynamic memory allocation with malloc()")
     }
     
-    // Detect memory leaks
-    const mallocCount = (this.code.match(/malloc|calloc/g) || []).length
+    // Check for pointers
+    if (/\*\w+/.test(this.code) && /->/.test(this.code)) {
+      concepts.push("Pointer manipulation and structure access")
+    }
+    
+    // Check for specific algorithms
+    if (/insert.*root.*value/.test(this.code) && /left.*right/.test(this.code)) {
+      concepts.push("Binary search tree insertion algorithm")
+    }
+    
+    if (/inorder.*left.*printf.*right/.test(this.code.replace(/\s+/g, ' '))) {
+      concepts.push("Inorder tree traversal (left-root-right)")
+    }
+    
+    if (concepts.length > 0) {
+      explanations.push({
+        title: "Important Concepts",
+        text: concepts.join(', ') + '.'
+      })
+    }
+  }
+
+  private explainComplexityAndSafety(explanations: ExplanationItem[]): void {
+    const analysis: string[] = []
+    
+    // Time complexity based on actual operations
+    if (/insert.*root/.test(this.code) && /left.*right/.test(this.code)) {
+      analysis.push("BST operations: O(log n) average, O(n) worst case")
+    }
+    
+    if (/inorder.*left.*right/.test(this.code.replace(/\s+/g, ' '))) {
+      analysis.push("Traversal: O(n) time")
+    }
+    
+    // Space complexity
+    const hasRecursion = this.findActualRecursiveFunctions().length > 0
+    if (hasRecursion) {
+      analysis.push("O(log n) recursion stack space")
+    }
+    
+    // Safety analysis
+    const mallocCount = (this.code.match(/malloc\s*\(/g) || []).length
     const freeCount = (this.code.match(/free\s*\(/g) || []).length
     
-    if (mallocCount > freeCount) {
+    if (mallocCount > 0 && freeCount >= mallocCount) {
+      analysis.push("Memory properly freed - no leaks")
+    } else if (mallocCount > freeCount) {
+      analysis.push(`Memory leak risk: ${mallocCount} malloc vs ${freeCount} free calls`)
+    }
+    
+    // Null pointer checks
+    if (/== NULL/.test(this.code)) {
+      analysis.push("Includes null pointer safety checks")
+    }
+    
+    if (analysis.length > 0) {
       explanations.push({
-        title: "Memory Leak Warning",
-        text: `Potential memory leak detected: ${mallocCount} allocations vs ${freeCount} deallocations. Each malloc() should have a corresponding free(). Memory leaks cause programs to consume increasing memory over time, eventually leading to system slowdown or crashes.`
+        title: "Complexity & Safety",
+        text: analysis.join('. ') + '.'
       })
     }
   }
 
-  private explainPointerConcepts(explanations: ExplanationItem[]): void {
-    if (/\*\w+/.test(this.code)) {
-      explanations.push({
-        title: "Pointer Mechanics",
-        text: "Pointers store memory addresses, enabling indirect data access and dynamic structures. The -> operator dereferences structure pointers (syntactic sugar for (*ptr).member). Pointers enable efficient parameter passing (pass by reference) and are essential for implementing linked data structures like trees and lists."
-      })
-    }
-    
-    // Detect double pointers or complex pointer usage
-    if (/\*\*\w+/.test(this.code)) {
-      explanations.push({
-        title: "Advanced Pointer Usage",
-        text: "Uses double pointers (pointer to pointer) for scenarios requiring modification of pointer values themselves. Common in functions that need to change what a pointer points to, such as inserting at the head of a linked list or implementing dynamic arrays."
-      })
-    }
-  }
-
-  private explainRecursion(explanations: ExplanationItem[]): void {
-    // Detect recursive functions
-    const recursiveFunctions = this.findRecursiveFunctions()
-    
-    if (recursiveFunctions.length > 0) {
-      explanations.push({
-        title: "Recursive Algorithm Design",
-        text: `Functions like ${recursiveFunctions.join(', ')} use recursion - a powerful technique where functions call themselves with modified parameters. Recursion naturally matches tree structures: base case handles empty nodes, recursive case processes current node and delegates subtrees. This creates elegant, readable code for hierarchical data.`
-      })
-      
-      // Check for tail recursion
-      if (this.hasTailRecursion()) {
-        explanations.push({
-          title: "Tail Recursion Optimization",
-          text: "Some recursive calls are in tail position (last operation before return), enabling compiler optimization to convert recursion into iteration. This prevents stack overflow for deep recursion by reusing the same stack frame."
-        })
-      }
-    }
-  }
-
-  private explainComplexity(explanations: ExplanationItem[]): void {
-    // BST complexity analysis
-    if (/typedef struct.*Node.*left.*right/.test(this.code.replace(/\n/g, ' '))) {
-      explanations.push({
-        title: "Time & Space Complexity Analysis",
-        text: "BST operations: O(log n) average case for balanced trees, O(n) worst case for skewed trees. Space complexity: O(n) for storage + O(log n) average recursion depth. The performance depends heavily on input order - random insertion creates balanced trees, sorted input creates linked-list-like structures."
-      })
-    }
-    
-    // General complexity hints
-    const hasNestedLoops = /for.*for|while.*while/.test(this.code.replace(/\n/g, ' '))
-    if (hasNestedLoops) {
-      explanations.push({
-        title: "Complexity Warning",
-        text: "Nested loops detected - this typically indicates O(n²) or higher time complexity. Consider if the algorithm can be optimized using better data structures (hash tables, heaps) or algorithmic techniques (divide-and-conquer, dynamic programming)."
-      })
-    }
-  }
-
-  private explainBestPractices(explanations: ExplanationItem[]): void {
-    const practices: string[] = []
-    
-    // Check for typedef usage
-    if (/typedef struct/.test(this.code)) {
-      practices.push("Uses typedef for cleaner syntax (Node* instead of struct Node*)")
-    }
-    
-    // Check for null checks
-    if (/== NULL|!= NULL/.test(this.code)) {
-      practices.push("Implements proper null pointer checks to prevent segmentation faults")
-    }
-    
-    // Check for const usage
-    if (/const\s+/.test(this.code)) {
-      practices.push("Uses const keyword to prevent accidental modifications")
-    }
-    
-    // Check for meaningful names
-    if (/createNode|insert|traverse|inorder/i.test(this.code)) {
-      practices.push("Uses descriptive function names that clearly indicate purpose")
-    }
-    
-    if (practices.length > 0) {
-      explanations.push({
-        title: "Programming Best Practices",
-        text: practices.join('. ') + '. These practices improve code readability, maintainability, and reduce bugs.'
-      })
-    }
-    
-    // Suggest improvements
-    const improvements: string[] = []
-    
-    if (!/const/.test(this.code) && /\*/.test(this.code)) {
-      improvements.push("Consider using const for read-only parameters")
-    }
-    
-    if (!/static/.test(this.code) && /^[a-z].*\(/m.test(this.code)) {
-      improvements.push("Consider making helper functions static to limit scope")
-    }
-    
-    if (improvements.length > 0) {
-      explanations.push({
-        title: "Potential Improvements",
-        text: improvements.join('. ') + '. These changes would enhance code quality and performance.'
-      })
-    }
-  }
-
-  private findRecursiveFunctions(): string[] {
+  private findActualRecursiveFunctions(): string[] {
     const functions: string[] = []
-    const functionRegex = /(\w+)\s*\([^)]*\)\s*\{[^}]*\1\s*\(/g
+    
+    // Find function definitions and check if they call themselves
+    const funcRegex = /(\w+)\s*\([^)]*\)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/gs
     let match
     
-    while ((match = functionRegex.exec(this.code)) !== null) {
-      functions.push(match[1])
+    while ((match = funcRegex.exec(this.code)) !== null) {
+      const funcName = match[1]
+      const funcBody = match[2]
+      
+      // Check if function calls itself
+      const callRegex = new RegExp(`\\b${funcName}\\s*\\(`, 'g')
+      if (callRegex.test(funcBody)) {
+        functions.push(funcName)
+      }
     }
     
     return functions
   }
 
-  private hasTailRecursion(): boolean {
-    // Simple heuristic: return statement directly calls the function
-    return /return\s+\w+\s*\([^)]*\)\s*;/.test(this.code)
-  }
-
   private estimateMemoryUsage(): { stackUsed: number; heapUsed: number; activeFrames: number; memoryLeaks: number } {
     const variables = this.code.match(/\b(int|char|float|double)\s+\w+/g) || []
     const functions = this.code.match(/\w+\s+\w+\s*\([^)]*\)\s*\{/g) || []
-    const mallocCalls = this.code.match(/malloc|calloc/g) || []
+    const mallocCalls = this.code.match(/malloc\s*\(/g) || []
     const freeCalls = this.code.match(/free\s*\(/g) || []
     const arrays = this.code.match(/\w+\s+\w+\s*\[\d+\]/g) || []
-    const structs = this.code.match(/typedef struct|struct\s+\w+/g) || []
 
     let stackUsed = 0
     
-    // Calculate variable sizes
+    // Calculate actual variable sizes
     variables.forEach(variable => {
       if (variable.includes('int') || variable.includes('float')) stackUsed += 4
       else if (variable.includes('double')) stackUsed += 8
       else if (variable.includes('char')) stackUsed += 1
     })
-
-    // Add struct sizes (estimate)
-    stackUsed += structs.length * 16
 
     // Add array sizes
     arrays.forEach(array => {
@@ -330,26 +300,14 @@ export class AdvancedCodeExplainer {
       }
     })
 
-    // Function call overhead + recursion depth estimate
-    const recursiveDepth = this.estimateRecursionDepth()
-    stackUsed += functions.length * 16 * recursiveDepth
+    // Function overhead
+    stackUsed += functions.length * 16
 
     return {
-      stackUsed: Math.min(stackUsed, 2048),
-      heapUsed: mallocCalls.length * 48, // Estimate node size
-      activeFrames: Math.max(1, functions.length * recursiveDepth),
+      stackUsed: Math.min(stackUsed, 1024),
+      heapUsed: mallocCalls.length * 24,
+      activeFrames: Math.max(1, functions.length),
       memoryLeaks: Math.max(0, mallocCalls.length - freeCalls.length)
     }
-  }
-
-  private estimateRecursionDepth(): number {
-    // Estimate based on algorithm type
-    if (/typedef struct.*Node.*left.*right/.test(this.code.replace(/\n/g, ' '))) {
-      return 10 // Typical BST depth
-    }
-    if (/fibonacci|factorial/i.test(this.code)) {
-      return 20 // Deep recursion
-    }
-    return 3 // Default shallow recursion
   }
 }
