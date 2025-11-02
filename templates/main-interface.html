@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeAnatomy Interface</title>
+</head>
+<body>
+    <div id="main-interface" class="main-interface">
+        <!-- Header -->
+        <header class="header fade-in">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <h1 class="logo-text">CodeAnatomy</h1>
+                        <span class="logo-subtitle">C Program Visualizer</span>
+                    </div>
+                    <nav class="nav-menu">
+                        <button id="new-project-btn" class="nav-btn glow-effect">New Project</button>
+                        <button id="examples-btn" class="nav-btn">Examples</button>
+                        <button id="settings-btn" class="nav-btn">Settings</button>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content slide-up">
+            <div class="container">
+                <div class="workspace">
+                    <!-- Code Editor Panel -->
+                    <div class="panel code-panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">C Code Editor</h3>
+                            <div class="panel-controls">
+                                <button id="run-btn" class="control-btn primary glow-effect">Run</button>
+                                <button id="step-btn" class="control-btn">Step</button>
+                                <button id="reset-btn" class="control-btn">Reset</button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <textarea id="code-editor" class="code-editor" placeholder="Enter your C code here..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Visualization Panel -->
+                    <div class="panel viz-panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Memory & Execution Visualizer</h3>
+                            <div class="viz-controls">
+                                <button id="memory-view-btn" class="viz-btn active">Memory</button>
+                                <button id="stack-view-btn" class="viz-btn">Stack</button>
+                                <button id="heap-view-btn" class="viz-btn">Heap</button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <canvas id="visualization-canvas" class="viz-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Data Structure Panel -->
+                    <div class="panel ds-panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Data Structures</h3>
+                        </div>
+                        <div class="panel-content">
+                            <div id="data-structures-container" class="ds-container">
+                                <!-- Dynamic data structure visualizations will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Info Panel -->
+                <div class="info-panel slide-up">
+                    <div class="info-tabs">
+                        <button id="console-tab" class="info-tab active">Console</button>
+                        <button id="memory-tab" class="info-tab">Memory Info</button>
+                        <button id="performance-tab" class="info-tab">Performance</button>
+                    </div>
+                    <div class="info-content">
+                        <div id="console-output" class="console-output"></div>
+                        <div id="memory-info" class="memory-info hidden"></div>
+                        <div id="performance-info" class="performance-info hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
