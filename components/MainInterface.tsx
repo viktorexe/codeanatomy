@@ -1,13 +1,11 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { CodeExplainer } from '@/utils/CodeExplainer'
-import { MemoryManager } from '@/utils/MemoryManager'
+import { AdvancedCodeExplainer } from '@/utils/AdvancedCodeExplainer'
 
 export default function MainInterface() {
   const interfaceRef = useRef<HTMLDivElement>(null)
-  const codeExplainer = useRef(new CodeExplainer())
-  const memoryManager = useRef(new MemoryManager())
+  const codeExplainer = useRef(new AdvancedCodeExplainer())
 
   useEffect(() => {
     // Load HTML template
@@ -48,11 +46,10 @@ export default function MainInterface() {
 
   const handleExplainCode = () => {
     const codeInput = document.getElementById('code-input') as HTMLTextAreaElement
-    const explanationContent = document.getElementById('explanation-content')
-    const statusIndicator = document.getElementById('status-indicator')
-    const statusText = document.getElementById('status-text')
+    const explanationArea = document.getElementById('explanation-area')
+    const summaryText = document.getElementById('summary-text')
     
-    if (codeInput && explanationContent && statusIndicator && statusText) {
+    if (codeInput && explanationArea && summaryText) {
       const code = codeInput.value
       
       if (!code.trim()) {
@@ -60,39 +57,47 @@ export default function MainInterface() {
         return
       }
 
-      updateStatus('processing', 'Analyzing your code...')
+      const startTime = Date.now()
+      updateStatus('processing', 'Analyzing code...')
       
-      // Simulate processing delay for better UX
       setTimeout(() => {
         try {
-          const explanations = codeExplainer.current.explain(code)
-          const memoryStats = codeExplainer.current.estimateMemoryUsage()
+          const analysis = codeExplainer.current.analyze(code)
           
-          displayExplanations(explanations)
-          updateMemoryStats(memoryStats)
-          updateStatus('complete', 'Code analysis complete')
+          displayAnalysis(analysis)
+          updateMemoryStats(analysis.summary.memoryUsage)
+          
+          const analysisTime = Date.now() - startTime
+          updateStatus('complete', 'Analysis complete')
+          updateAnalysisTime(analysisTime)
         } catch (error) {
           updateStatus('error', 'Error analyzing code')
-          console.error('Explanation error:', error)
+          console.error('Analysis error:', error)
         }
-      }, 1000)
+      }, 800)
     }
   }
 
   const handleClearCode = () => {
     const codeInput = document.getElementById('code-input') as HTMLTextAreaElement
-    const explanationContent = document.getElementById('explanation-content')
+    const explanationArea = document.getElementById('explanation-area')
+    const summaryText = document.getElementById('summary-text')
     
     if (codeInput) {
       codeInput.value = ''
     }
     
-    if (explanationContent) {
-      explanationContent.innerHTML = getWelcomeMessage()
+    if (explanationArea) {
+      explanationArea.innerHTML = getWelcomeMessage()
     }
     
-    updateStatus('ready', 'Ready to explain')
+    if (summaryText) {
+      summaryText.textContent = 'Ready to analyze your C code'
+    }
+    
+    updateStatus('ready', 'Ready')
     resetMemoryStats()
+    updateAnalysisTime(0)
   }
 
   const handleLoadExample = () => {
@@ -100,21 +105,34 @@ export default function MainInterface() {
     
     if (codeInput) {
       const exampleCode = `#include <stdio.h>
+#include <stdlib.h>
+
+struct Student {
+    char name[50];
+    int age;
+    float gpa;
+};
+
+int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
 
 int main() {
-    int x = 10;
-    int y = 20;
-    int sum = x + y;
+    struct Student students[3];
+    int *numbers = malloc(5 * sizeof(int));
     
-    printf("First number: %d\\n", x);
-    printf("Second number: %d\\n", y);
-    printf("Sum: %d\\n", sum);
+    for (int i = 0; i < 5; i++) {
+        numbers[i] = factorial(i + 1);
+        printf("Factorial of %d: %d\\n", i + 1, numbers[i]);
+    }
     
+    free(numbers);
     return 0;
 }`
       
       codeInput.value = exampleCode
-      updateStatus('ready', 'Example loaded - click Explain Code')
+      updateStatus('ready', 'Complex example loaded - click Explain Code')
     }
   }
 
@@ -128,75 +146,86 @@ int main() {
     }
   }
 
-  const displayExplanations = (explanations: any[]) => {
-    const explanationContent = document.getElementById('explanation-content')
+  const displayAnalysis = (analysis: any) => {
+    const explanationArea = document.getElementById('explanation-area')
+    const summaryText = document.getElementById('summary-text')
     
-    if (explanationContent) {
-      let html = '<div class="code-explanation">'
+    if (summaryText) {
+      summaryText.textContent = analysis.summary.overview
+    }
+    
+    if (explanationArea) {
+      let html = '<div class="analysis-results">'
       
-      explanations.forEach((explanation, index) => {
+      // Program Summary
+      html += `
+        <div class="program-summary">
+          <div class="summary-title">Program Summary (${analysis.summary.complexity})</div>
+          <div class="summary-description">${analysis.summary.overview}</div>
+        </div>
+      `
+      
+      // Components
+      html += '<div class="components-list">'
+      
+      analysis.components.forEach((component: any, index: number) => {
         html += `
-          <div class="explanation-block fade-in" style="animation-delay: ${index * 0.1}s">
-            <div class="explanation-title">${explanation.title}</div>
-            <div class="explanation-text">${explanation.content}</div>
+          <div class="component-item" style="animation-delay: ${index * 0.1}s">
+            <div class="component-header">
+              <div class="component-title">${component.title}</div>
+              <div class="component-type">${component.type.toUpperCase()}</div>
+            </div>
+            <div class="component-description">${component.description}</div>
         `
         
-        if (explanation.codeLines && explanation.codeLines.length > 0) {
-          explanation.codeLines.forEach((line: string) => {
-            html += `<div class="code-line">${line}</div>`
-          })
+        if (component.codeSnippet) {
+          html += `<div class="code-snippet">${component.codeSnippet}</div>`
         }
         
         html += '</div>'
       })
       
-      html += '</div>'
-      explanationContent.innerHTML = html
+      html += '</div></div>'
+      explanationArea.innerHTML = html
     }
   }
 
   const getWelcomeMessage = () => {
     return `
-      <div class="welcome-message">
-        <div class="welcome-icon">📖</div>
-        <h3>Welcome to CodeAnatomy</h3>
-        <p>Paste your C code on the left and click "Explain Code" to get a detailed breakdown of what your program does.</p>
-        <div class="features">
-          <div class="feature">✨ Line-by-line explanations</div>
-          <div class="feature">🧠 Logic flow analysis</div>
-          <div class="feature">💾 Memory usage insights</div>
-          <div class="feature">🔧 Best practices tips</div>
-        </div>
+      <div class="welcome-state">
+        <div class="welcome-icon">🔍</div>
+        <h2>Paste Your C Code</h2>
+        <p>Enter any C program on the left and click "Explain Code" to get:</p>
+        <ul class="feature-list">
+          <li>📋 Quick summary of what the program does</li>
+          <li>🔧 Detailed breakdown of each component</li>
+          <li>💾 Memory usage analysis</li>
+          <li>⚡ Performance insights</li>
+        </ul>
       </div>
     `
   }
 
   const updateMemoryStats = (stats: any) => {
-    const stackUsed = document.getElementById('stack-used')
-    const stackProgress = document.getElementById('stack-progress')
-    const heapUsed = document.getElementById('heap-used')
-    const heapProgress = document.getElementById('heap-progress')
-    const activeFrames = document.getElementById('active-frames')
-    const memoryLeaks = document.getElementById('memory-leaks')
+    const stackUsage = document.getElementById('stack-usage')
+    const heapUsage = document.getElementById('heap-usage')
+    const framesCount = document.getElementById('frames-count')
+    const leaksCount = document.getElementById('leaks-count')
     
-    if (stackUsed && stackProgress) {
-      stackUsed.textContent = stats.stackUsed.toString()
-      const stackPercent = (stats.stackUsed / 8192) * 100
-      stackProgress.style.width = `${stackPercent}%`
+    if (stackUsage) {
+      stackUsage.textContent = `${stats.stackUsed}/8192`
     }
     
-    if (heapUsed && heapProgress) {
-      heapUsed.textContent = stats.heapUsed.toString()
-      const heapPercent = (stats.heapUsed / 65536) * 100
-      heapProgress.style.width = `${heapPercent}%`
+    if (heapUsage) {
+      heapUsage.textContent = `${stats.heapUsed}/65536`
     }
     
-    if (activeFrames) {
-      activeFrames.textContent = stats.activeFrames.toString()
+    if (framesCount) {
+      framesCount.textContent = stats.activeFrames.toString()
     }
     
-    if (memoryLeaks) {
-      memoryLeaks.textContent = stats.memoryLeaks.toString()
+    if (leaksCount) {
+      leaksCount.textContent = stats.memoryLeaks.toString()
     }
   }
 
@@ -207,6 +236,17 @@ int main() {
       activeFrames: 0,
       memoryLeaks: 0
     })
+  }
+  
+  const updateAnalysisTime = (time: number) => {
+    const analysisTimeEl = document.getElementById('analysis-time')
+    if (analysisTimeEl) {
+      if (time > 0) {
+        analysisTimeEl.textContent = `Analysis time: ${time}ms`
+      } else {
+        analysisTimeEl.textContent = 'Analysis time: --'
+      }
+    }
   }
 
 
