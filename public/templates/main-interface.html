@@ -15,7 +15,7 @@
             </div>
             <div class="controls">
                 <button id="example-btn" class="btn-secondary">Load Example</button>
-                <button id="clear-btn" class="btn-secondary">Clear All</button>
+                <button id="clear-btn" class="btn-secondary">Clear</button>
                 <button id="explain-btn" class="btn-primary">Explain Code</button>
             </div>
         </header>
@@ -24,38 +24,46 @@
         <div class="main-layout">
             <!-- Left: Code Input -->
             <div class="code-section">
-                <div class="section-title">C Code Input</div>
+                <div class="section-title">Your C Code</div>
                 <textarea id="code-input" class="code-textarea" placeholder="Paste your C code here..."></textarea>
             </div>
 
-            <!-- Right: Explanation -->
-            <div class="explanation-section">
-                <!-- Summary Bar -->
-                <div class="summary-bar">
-                    <div class="summary-content">
-                        <div id="summary-text" class="summary-text">Ready to analyze your C code</div>
-                        <div class="memory-stats">
-                            <span class="stat">Stack: <span id="stack-usage">0/8192</span></span>
-                            <span class="stat">Heap: <span id="heap-usage">0/65536</span></span>
-                            <span class="stat">Frames: <span id="frames-count">0</span></span>
-                            <span class="stat">Leaks: <span id="leaks-count">0</span></span>
-                        </div>
+            <!-- Right: Results -->
+            <div class="results-section">
+                <!-- Quick Summary -->
+                <div class="summary-card">
+                    <div class="card-title">What This Code Does</div>
+                    <div id="summary-text" class="summary-text">Ready to analyze your code</div>
+                </div>
+
+                <!-- Explanation Cards -->
+                <div id="explanation-cards" class="explanation-cards">
+                    <div class="welcome-card">
+                        <div class="welcome-icon">🔍</div>
+                        <h3>Paste Your C Code</h3>
+                        <p>Enter your code on the left and click "Explain Code" to see what it does</p>
                     </div>
                 </div>
 
-                <!-- Explanation Content -->
-                <div class="explanation-content">
-                    <div id="explanation-area" class="explanation-area">
-                        <div class="welcome-state">
-                            <div class="welcome-icon">🔍</div>
-                            <h2>Paste Your C Code</h2>
-                            <p>Enter any C program on the left and click "Explain Code" to get:</p>
-                            <ul class="feature-list">
-                                <li>📋 Quick summary of what the program does</li>
-                                <li>🔧 Detailed breakdown of each component</li>
-                                <li>💾 Memory usage analysis</li>
-                                <li>⚡ Performance insights</li>
-                            </ul>
+                <!-- Memory Stats -->
+                <div class="memory-card">
+                    <div class="card-title">Memory Usage</div>
+                    <div class="memory-grid">
+                        <div class="memory-item">
+                            <span class="memory-label">Stack</span>
+                            <span id="stack-usage" class="memory-value">0/8192 bytes</span>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-label">Heap</span>
+                            <span id="heap-usage" class="memory-value">0/65536 bytes</span>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-label">Functions</span>
+                            <span id="frames-count" class="memory-value">0</span>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-label">Leaks</span>
+                            <span id="leaks-count" class="memory-value">0</span>
                         </div>
                     </div>
                 </div>

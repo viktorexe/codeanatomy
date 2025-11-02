@@ -1,6 +1,11 @@
+interface ExplanationItem {
+  title: string
+  text: string
+}
+
 interface ProgramAnalysis {
   summary: string
-  detailedExplanation: string
+  explanations: ExplanationItem[]
   memoryUsage: {
     stackUsed: number
     heapUsed: number
@@ -18,14 +23,14 @@ export class AdvancedCodeExplainer {
     if (!this.code) {
       return {
         summary: 'No code provided for analysis.',
-        detailedExplanation: 'Paste your C code to see what it does.',
+        explanations: [],
         memoryUsage: { stackUsed: 0, heapUsed: 0, activeFrames: 0, memoryLeaks: 0 }
       }
     }
 
     return {
       summary: this.generateSummary(),
-      detailedExplanation: this.generateExplanation(),
+      explanations: this.generateExplanations(),
       memoryUsage: this.estimateMemoryUsage()
     }
   }
@@ -37,85 +42,88 @@ export class AdvancedCodeExplainer {
     const hasPointers = /\*\w+/.test(this.code)
     const hasStructs = /struct\s+\w+/.test(this.code)
     const hasMalloc = /malloc|calloc/.test(this.code)
+    const hasIO = /printf|scanf/.test(this.code)
     
     let summary = 'This C program '
     
-    if (hasMain) summary += 'starts with a main function and '
-    if (hasLoops) summary += 'uses loops for repetition, '
-    if (hasArrays) summary += 'works with arrays to store multiple values, '
-    if (hasPointers) summary += 'uses pointers for memory access, '
-    if (hasStructs) summary += 'defines custom data structures, '
-    if (hasMalloc) summary += 'allocates memory dynamically, '
+    if (hasMain) {
+      summary += 'starts execution from the main function'
+    } else {
+      summary += 'contains function definitions'
+    }
     
-    summary = summary.replace(/,\s*$/, '.')
+    const features = []
+    if (hasIO) features.push('displays output or reads input')
+    if (hasLoops) features.push('uses loops for repetition')
+    if (hasArrays) features.push('works with arrays')
+    if (hasPointers) features.push('uses pointers')
+    if (hasStructs) features.push('defines custom data types')
+    if (hasMalloc) features.push('allocates memory dynamically')
+    
+    if (features.length > 0) {
+      summary += ' and ' + features.join(', ')
+    }
+    
+    summary += '.'
     
     return summary
   }
 
-  private generateExplanation(): string {
-    let explanation = ''
+  private generateExplanations(): ExplanationItem[] {
+    const explanations: ExplanationItem[] = []
     
-    // Libraries
-    const includes = this.analyzeIncludes()
-    if (includes) explanation += includes + '\n\n'
+    // Check what the code contains and explain each part
+    this.explainIncludes(explanations)
+    this.explainFunctions(explanations)
+    this.explainVariables(explanations)
+    this.explainStructs(explanations)
+    this.explainLoops(explanations)
+    this.explainMemory(explanations)
     
-    // Main components
-    const functions = this.analyzeFunctions()
-    if (functions) explanation += functions + '\n\n'
-    
-    const variables = this.analyzeVariables()
-    if (variables) explanation += variables + '\n\n'
-    
-    const structures = this.analyzeStructures()
-    if (structures) explanation += structures + '\n\n'
-    
-    const logic = this.analyzeLogic()
-    if (logic) explanation += logic + '\n\n'
-    
-    const memory = this.analyzeMemory()
-    if (memory) explanation += memory
-    
-    return explanation.trim()
+    return explanations
   }
 
-  private analyzeIncludes(): string {
+  private explainIncludes(explanations: ExplanationItem[]): void {
     const includes = this.code.match(/#include\s*[<"](.*?)[>"]/g)
-    if (!includes || includes.length === 0) return ''
+    if (!includes) return
     
-    let explanation = '📚 **Libraries Used:**\n'
-    
+    const libs = []
     includes.forEach(include => {
       const match = include.match(/#include\s*[<"](.*?)[>"]/)
       if (match) {
         const lib = match[1]
         switch (lib) {
           case 'stdio.h':
-            explanation += '• stdio.h - For input/output functions like printf() and scanf()\n'
+            libs.push('stdio.h for input/output functions')
             break
           case 'stdlib.h':
-            explanation += '• stdlib.h - For memory allocation (malloc, free) and utility functions\n'
+            libs.push('stdlib.h for memory and utility functions')
             break
           case 'string.h':
-            explanation += '• string.h - For string manipulation functions like strlen(), strcpy()\n'
+            libs.push('string.h for text manipulation')
             break
           case 'math.h':
-            explanation += '• math.h - For mathematical functions like sqrt(), pow()\n'
+            libs.push('math.h for mathematical operations')
             break
           default:
-            explanation += `• ${lib} - Custom header file\n`
+            libs.push(`${lib} (custom header)`)
         }
       }
     })
     
-    return explanation
+    if (libs.length > 0) {
+      explanations.push({
+        title: 'Libraries Used',
+        text: 'Includes ' + libs.join(', ') + ' to access additional functionality.'
+      })
+    }
   }
 
-  private analyzeFunctions(): string {
+  private explainFunctions(explanations: ExplanationItem[]): void {
     const functions = this.code.match(/(\w+)\s+(\w+)\s*\([^)]*\)\s*\{/g)
-    if (!functions || functions.length === 0) return ''
+    if (!functions) return
     
-    let explanation = '🔧 **Functions:**\n'
-    
+    const funcList = []
     functions.forEach(func => {
       const match = func.match(/(\w+)\s+(\w+)\s*\([^)]*\)/)
       if (match) {
@@ -123,107 +131,109 @@ export class AdvancedCodeExplainer {
         const name = match[2]
         
         if (name === 'main') {
-          explanation += '• main() - Program entry point where execution starts\n'
+          funcList.push('main() - program entry point')
         } else {
-          explanation += `• ${name}() - ${returnType === 'void' ? 'Performs operations' : 'Returns ' + returnType + ' value'}\n`
+          funcList.push(`${name}() - ${returnType === 'void' ? 'performs operations' : 'returns ' + returnType}`)
         }
       }
     })
     
-    return explanation
+    if (funcList.length > 0) {
+      explanations.push({
+        title: 'Functions',
+        text: funcList.join(', ') + '.'
+      })
+    }
   }
 
-  private analyzeVariables(): string {
+  private explainVariables(explanations: ExplanationItem[]): void {
     const variables = this.code.match(/\b(int|char|float|double)\s+(\**)(\w+)/g)
-    if (!variables || variables.length === 0) return ''
+    if (!variables) return
     
-    let explanation = '📊 **Variables:**\n'
-    const varTypes = new Set()
+    const types = new Set()
+    let hasPointers = false
     
     variables.forEach(variable => {
       const match = variable.match(/\b(int|char|float|double)\s+(\**)(\w+)/)
       if (match) {
         const type = match[1]
         const isPointer = match[2].length > 0
-        const name = match[3]
         
-        if (isPointer) {
-          explanation += `• ${name} - Pointer to ${type} (stores memory address)\n`
-        } else {
-          varTypes.add(type)
-        }
+        types.add(type)
+        if (isPointer) hasPointers = true
       }
     })
     
-    if (varTypes.size > 0) {
-      explanation += '• Uses data types: ' + Array.from(varTypes).join(', ') + '\n'
-    }
+    let text = 'Uses ' + Array.from(types).join(', ') + ' data types'
+    if (hasPointers) text += ' and pointers for memory access'
+    text += '.'
     
-    return explanation
+    explanations.push({
+      title: 'Variables',
+      text: text
+    })
   }
 
-  private analyzeStructures(): string {
+  private explainStructs(explanations: ExplanationItem[]): void {
     const structs = this.code.match(/struct\s+(\w+)\s*\{([^}]+)\}/g)
-    if (!structs || structs.length === 0) return ''
+    if (!structs) return
     
-    let explanation = '🏗️ **Data Structures:**\n'
-    
+    const structList = []
     structs.forEach(struct => {
       const match = struct.match(/struct\s+(\w+)\s*\{([^}]+)\}/)
       if (match) {
         const name = match[1]
         const members = match[2].split(';').filter(m => m.trim()).length
-        explanation += `• struct ${name} - Custom type with ${members} member variables\n`
+        structList.push(`${name} (${members} members)`)
       }
     })
     
-    return explanation
+    if (structList.length > 0) {
+      explanations.push({
+        title: 'Custom Data Types',
+        text: 'Defines struct ' + structList.join(', ') + ' to group related data together.'
+      })
+    }
   }
 
-  private analyzeLogic(): string {
-    let explanation = ''
-    const logicElements = []
-    
-    // Check for loops
+  private explainLoops(explanations: ExplanationItem[]): void {
     const forLoops = (this.code.match(/for\s*\(/g) || []).length
     const whileLoops = (this.code.match(/while\s*\(/g) || []).length
-    
-    if (forLoops > 0) logicElements.push(`${forLoops} for loop${forLoops > 1 ? 's' : ''}`)
-    if (whileLoops > 0) logicElements.push(`${whileLoops} while loop${whileLoops > 1 ? 's' : ''}`)
-    
-    // Check for conditions
     const ifStatements = (this.code.match(/if\s*\(/g) || []).length
-    if (ifStatements > 0) logicElements.push(`${ifStatements} conditional statement${ifStatements > 1 ? 's' : ''}`)
     
-    // Check for arrays
-    const arrays = (this.code.match(/\w+\[\d*\]/g) || []).length
-    if (arrays > 0) logicElements.push(`${arrays} array${arrays > 1 ? 's' : ''}`)
+    const controls = []
+    if (forLoops > 0) controls.push(`${forLoops} for loop${forLoops > 1 ? 's' : ''}`)
+    if (whileLoops > 0) controls.push(`${whileLoops} while loop${whileLoops > 1 ? 's' : ''}`)
+    if (ifStatements > 0) controls.push(`${ifStatements} if statement${ifStatements > 1 ? 's' : ''}`)
     
-    if (logicElements.length > 0) {
-      explanation = '⚡ **Program Logic:**\n• Contains ' + logicElements.join(', ') + '\n'
+    if (controls.length > 0) {
+      explanations.push({
+        title: 'Control Flow',
+        text: 'Contains ' + controls.join(', ') + ' to control program execution.'
+      })
     }
-    
-    return explanation
   }
 
-  private analyzeMemory(): string {
+  private explainMemory(explanations: ExplanationItem[]): void {
     const mallocCalls = (this.code.match(/malloc|calloc/g) || []).length
     const freeCalls = (this.code.match(/free\s*\(/g) || []).length
     
-    if (mallocCalls === 0) return ''
-    
-    let explanation = '💾 **Memory Management:**\n'
-    explanation += `• Allocates memory ${mallocCalls} time${mallocCalls > 1 ? 's' : ''}\n`
-    
-    if (freeCalls === 0) {
-      explanation += '• ⚠️ Warning: No memory is freed (potential memory leak)\n'
-    } else if (freeCalls < mallocCalls) {
-      explanation += '• ⚠️ Warning: Some memory may not be freed\n'
-    } else {
-      explanation += '• ✅ Memory is properly freed\n'
+    if (mallocCalls > 0) {
+      let text = `Allocates memory dynamically ${mallocCalls} time${mallocCalls > 1 ? 's' : ''}`
+      
+      if (freeCalls === 0) {
+        text += '. Warning: Memory is not freed (potential leak).'
+      } else if (freeCalls < mallocCalls) {
+        text += '. Warning: Some memory may not be freed.'
+      } else {
+        text += ' and properly frees it.'
+      }
+      
+      explanations.push({
+        title: 'Memory Management',
+        text: text
+      })
     }
-    
-    return explanation
   }
 
   private estimateMemoryUsage(): { stackUsed: number; heapUsed: number; activeFrames: number; memoryLeaks: number } {
@@ -235,19 +245,19 @@ export class AdvancedCodeExplainer {
 
     let stackUsed = 0
     
-    // Calculate basic variable sizes
+    // Basic variable sizes
     variables.forEach(variable => {
       if (variable.includes('int') || variable.includes('float')) stackUsed += 4
       else if (variable.includes('double')) stackUsed += 8
       else if (variable.includes('char')) stackUsed += 1
     })
 
-    // Add array sizes
+    // Array sizes
     arrays.forEach(array => {
       const sizeMatch = array.match(/\[(\d+)\]/)
       if (sizeMatch) {
         const size = parseInt(sizeMatch[1])
-        stackUsed += size * 4 // Assume int arrays
+        stackUsed += size * 4
       }
     })
 

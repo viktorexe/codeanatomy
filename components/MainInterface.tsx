@@ -141,20 +141,26 @@ int main() {
   }
 
   const displayAnalysis = (analysis: any) => {
-    const explanationArea = document.getElementById('explanation-area')
+    const explanationCards = document.getElementById('explanation-cards')
     const summaryText = document.getElementById('summary-text')
     
     if (summaryText) {
       summaryText.textContent = analysis.summary
     }
     
-    if (explanationArea) {
-      const html = `
-        <div class="detailed-explanation">
-          <div class="explanation-text">${analysis.detailedExplanation}</div>
-        </div>
-      `
-      explanationArea.innerHTML = html
+    if (explanationCards) {
+      let html = ''
+      
+      analysis.explanations.forEach((item: any, index: number) => {
+        html += `
+          <div class="explanation-item fade-in" style="animation-delay: ${index * 0.1}s">
+            <div class="explanation-title">${item.title}</div>
+            <div class="explanation-text">${item.text}</div>
+          </div>
+        `
+      })
+      
+      explanationCards.innerHTML = html
     }
   }
 
