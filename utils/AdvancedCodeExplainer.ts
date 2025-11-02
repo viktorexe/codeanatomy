@@ -36,11 +36,16 @@ export class AdvancedCodeExplainer {
   }
 
   private analyzePurpose(): string {
-    // Analyze what the program actually does based on main()
-    const mainMatch = this.code.match(/int\s+main\s*\([^)]*\)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/s)
-    if (!mainMatch) return "Program structure without main function."
-
-    const mainBody = mainMatch[1]
+    // Find main function
+    const mainStart = this.code.indexOf('int main')
+    if (mainStart === -1) return "Program structure without main function."
+    
+    const mainCode = this.code.substring(mainStart)
+    const braceStart = mainCode.indexOf('{')
+    if (braceStart === -1) return "Invalid main function structure."
+    
+    // Extract main body (simple approach)
+    const mainBody = mainCode.substring(braceStart + 1, mainCode.lastIndexOf('}'))
     
     // Check actual operations in main
     const hasInsert = /insert\s*\(/.test(mainBody)
@@ -125,10 +130,14 @@ export class AdvancedCodeExplainer {
   }
 
   private explainHowItWorks(explanations: ExplanationItem[]): void {
-    const mainMatch = this.code.match(/int\s+main\s*\([^)]*\)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/s)
-    if (!mainMatch) return
+    const mainStart = this.code.indexOf('int main')
+    if (mainStart === -1) return
 
-    const mainBody = mainMatch[1]
+    const mainCode = this.code.substring(mainStart)
+    const braceStart = mainCode.indexOf('{')
+    if (braceStart === -1) return
+    
+    const mainBody = mainCode.substring(braceStart + 1, mainCode.lastIndexOf('}'))
     const steps: string[] = []
     
     // Analyze main() execution flow
@@ -257,18 +266,29 @@ export class AdvancedCodeExplainer {
   private findActualRecursiveFunctions(): string[] {
     const functions: string[] = []
     
-    // Find function definitions and check if they call themselves
-    const funcRegex = /(\w+)\s*\([^)]*\)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/gs
-    let match
+    // Simple approach to find recursive functions
+    const lines = this.code.split('\n')
+    let currentFunction = ''
+    let inFunction = false
     
-    while ((match = funcRegex.exec(this.code)) !== null) {
-      const funcName = match[1]
-      const funcBody = match[2]
+    for (const line of lines) {
+      const funcMatch = line.match(/(\w+)\s+(\w+)\s*\([^)]*\)\s*\{/)
+      if (funcMatch) {
+        currentFunction = funcMatch[2]
+        inFunction = true
+        continue
+      }
       
-      // Check if function calls itself
-      const callRegex = new RegExp(`\\b${funcName}\\s*\\(`, 'g')
-      if (callRegex.test(funcBody)) {
-        functions.push(funcName)
+      if (inFunction && line.includes('}') && !line.includes('{')) {
+        inFunction = false
+        currentFunction = ''
+        continue
+      }
+      
+      if (inFunction && currentFunction && line.includes(currentFunction + '(')) {
+        if (!functions.includes(currentFunction)) {
+          functions.push(currentFunction)
+        }
       }
     }
     
