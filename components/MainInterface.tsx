@@ -107,32 +107,26 @@ export default function MainInterface() {
       const exampleCode = `#include <stdio.h>
 #include <stdlib.h>
 
-struct Student {
-    char name[50];
+struct Person {
+    char name[30];
     int age;
-    float gpa;
 };
 
-int factorial(int n) {
-    if (n <= 1) return 1;
-    return n * factorial(n - 1);
-}
-
 int main() {
-    struct Student students[3];
-    int *numbers = malloc(5 * sizeof(int));
+    struct Person people[3];
+    int *scores = malloc(5 * sizeof(int));
     
     for (int i = 0; i < 5; i++) {
-        numbers[i] = factorial(i + 1);
-        printf("Factorial of %d: %d\\n", i + 1, numbers[i]);
+        scores[i] = i * 10;
+        printf("Score %d: %d\\n", i + 1, scores[i]);
     }
     
-    free(numbers);
+    free(scores);
     return 0;
 }`
       
       codeInput.value = exampleCode
-      updateStatus('ready', 'Complex example loaded - click Explain Code')
+      updateStatus('ready', 'Example loaded - click Explain Code')
     }
   }
 

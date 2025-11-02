@@ -222,12 +222,31 @@ body {
 
 .explanation-text {
   color: #e6edf3;
-  font-size: 0.95rem;
-  line-height: 1.8;
-  text-align: justify;
+  font-size: 0.9rem;
+  line-height: 1.6;
   font-weight: 400;
-  letter-spacing: 0.01em;
   white-space: pre-line;
+}
+
+.explanation-text strong {
+  color: #00d4aa;
+  font-weight: 600;
+}
+
+.explanation-text h3 {
+  color: #00d4aa;
+  font-size: 1rem;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.explanation-text ul {
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+}
+
+.explanation-text li {
+  margin: 0.3rem 0;
+  color: #f0f6fc;
 }
 
 /* Status Bar */
