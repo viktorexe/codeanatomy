@@ -65,7 +65,7 @@ export default function MainInterface() {
           const analysis = codeExplainer.current.analyze(code)
           
           displayAnalysis(analysis)
-          updateMemoryStats(analysis.summary.memoryUsage)
+          updateMemoryStats(analysis.memoryUsage)
           
           const analysisTime = Date.now() - startTime
           updateStatus('complete', 'Analysis complete')
