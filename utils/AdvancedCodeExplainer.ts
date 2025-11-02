@@ -87,7 +87,7 @@ export class AdvancedCodeExplainer {
     const includes = this.code.match(/#include\s*[<"](.*?)[>"]/g)
     if (!includes) return
     
-    const libs = []
+    const libs: string[] = []
     includes.forEach(include => {
       const match = include.match(/#include\s*[<"](.*?)[>"]/)
       if (match) {
@@ -123,7 +123,7 @@ export class AdvancedCodeExplainer {
     const functions = this.code.match(/(\w+)\s+(\w+)\s*\([^)]*\)\s*\{/g)
     if (!functions) return
     
-    const funcList = []
+    const funcList: string[] = []
     functions.forEach(func => {
       const match = func.match(/(\w+)\s+(\w+)\s*\([^)]*\)/)
       if (match) {
@@ -178,7 +178,7 @@ export class AdvancedCodeExplainer {
     const structs = this.code.match(/struct\s+(\w+)\s*\{([^}]+)\}/g)
     if (!structs) return
     
-    const structList = []
+    const structList: string[] = []
     structs.forEach(struct => {
       const match = struct.match(/struct\s+(\w+)\s*\{([^}]+)\}/)
       if (match) {
@@ -201,7 +201,7 @@ export class AdvancedCodeExplainer {
     const whileLoops = (this.code.match(/while\s*\(/g) || []).length
     const ifStatements = (this.code.match(/if\s*\(/g) || []).length
     
-    const controls = []
+    const controls: string[] = []
     if (forLoops > 0) controls.push(`${forLoops} for loop${forLoops > 1 ? 's' : ''}`)
     if (whileLoops > 0) controls.push(`${whileLoops} while loop${whileLoops > 1 ? 's' : ''}`)
     if (ifStatements > 0) controls.push(`${ifStatements} if statement${ifStatements > 1 ? 's' : ''}`)
