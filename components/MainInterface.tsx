@@ -46,10 +46,10 @@ export default function MainInterface() {
 
   const handleExplainCode = () => {
     const codeInput = document.getElementById('code-input') as HTMLTextAreaElement
-    const explanationArea = document.getElementById('explanation-area')
+    const explanationCards = document.getElementById('explanation-cards')
     const summaryText = document.getElementById('summary-text')
     
-    if (codeInput && explanationArea && summaryText) {
+    if (codeInput && explanationCards && summaryText) {
       const code = codeInput.value
       
       if (!code.trim()) {
@@ -80,15 +80,15 @@ export default function MainInterface() {
 
   const handleClearCode = () => {
     const codeInput = document.getElementById('code-input') as HTMLTextAreaElement
-    const explanationArea = document.getElementById('explanation-area')
+    const explanationCards = document.getElementById('explanation-cards')
     const summaryText = document.getElementById('summary-text')
     
     if (codeInput) {
       codeInput.value = ''
     }
     
-    if (explanationArea) {
-      explanationArea.innerHTML = getWelcomeMessage()
+    if (explanationCards) {
+      explanationCards.innerHTML = getWelcomeMessage()
     }
     
     if (summaryText) {
@@ -166,16 +166,10 @@ int main() {
 
   const getWelcomeMessage = () => {
     return `
-      <div class="welcome-state">
+      <div class="welcome-card">
         <div class="welcome-icon">🔍</div>
-        <h2>Paste Your C Code</h2>
-        <p>Enter any C program on the left and click "Explain Code" to get:</p>
-        <ul class="feature-list">
-          <li>📋 Quick summary of what the program does</li>
-          <li>🔧 Detailed breakdown of each component</li>
-          <li>💾 Memory usage analysis</li>
-          <li>⚡ Performance insights</li>
-        </ul>
+        <h3>Paste Your C Code</h3>
+        <p>Enter your code on the left and click "Explain Code" to see what it does</p>
       </div>
     `
   }
