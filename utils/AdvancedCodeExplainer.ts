@@ -36,10 +36,12 @@ export class AdvancedCodeExplainer {
   }
 
   private generateAdvancedSummary(): string {
+    const codeFlat = this.code.replace(/\n/g, ' ')
+    
     // Detect algorithm patterns
-    const isBST = /typedef struct.*Node.*left.*right/s.test(this.code) && /insert.*root.*value/s.test(this.code)
-    const isLinkedList = /typedef struct.*Node.*next/s.test(this.code)
-    const isRecursive = /(\w+)\s*\([^)]*\).*\1\s*\(/s.test(this.code)
+    const isBST = /typedef struct.*Node.*left.*right/.test(codeFlat) && /insert.*root.*value/.test(codeFlat)
+    const isLinkedList = /typedef struct.*Node.*next/.test(codeFlat)
+    const isRecursive = /(\w+)\s*\([^)]*\).*\1\s*\(/.test(codeFlat)
     const hasTraversal = /inorder|preorder|postorder|traverse/i.test(this.code)
     const hasSorting = /sort|bubble|quick|merge|selection/i.test(this.code)
     const hasSearching = /search|find|binary.*search/i.test(this.code)
@@ -92,8 +94,10 @@ export class AdvancedCodeExplainer {
   }
 
   private explainDataStructures(explanations: ExplanationItem[]): void {
+    const codeFlat = this.code.replace(/\n/g, ' ')
+    
     // Detect BST
-    if (/typedef struct.*Node.*left.*right/s.test(this.code)) {
+    if (/typedef struct.*Node.*left.*right/.test(codeFlat)) {
       explanations.push({
         title: "Binary Search Tree Implementation",
         text: "This creates a BST where each node contains data and two pointers (left/right). The BST property ensures left subtree values < parent < right subtree values. This enables O(log n) operations in balanced trees, making it efficient for searching, insertion, and deletion compared to linear structures like arrays."
@@ -101,7 +105,7 @@ export class AdvancedCodeExplainer {
     }
     
     // Detect Linked List
-    if (/typedef struct.*Node.*next/s.test(this.code)) {
+    if (/typedef struct.*Node.*next/.test(codeFlat)) {
       explanations.push({
         title: "Linked List Structure",
         text: "Uses a linked list where each node contains data and a pointer to the next node. Unlike arrays with fixed memory locations, linked lists use dynamic allocation, allowing efficient insertion/deletion anywhere in the list without shifting elements. Trade-off: O(1) insertion but O(n) random access."
@@ -129,7 +133,7 @@ export class AdvancedCodeExplainer {
     }
     
     // Insertion algorithm
-    if (/insert.*root.*value/s.test(this.code)) {
+    if (/insert.*root.*value/.test(this.code.replace(/\n/g, ' '))) {
       explanations.push({
         title: "BST Insertion Algorithm",
         text: "The insertion algorithm maintains BST property by recursively comparing values: go left if smaller, right if larger. This ensures the tree remains searchable. The base case (root == NULL) creates new nodes, while recursive calls build the path. Time complexity: O(log n) average, O(n) worst case (skewed tree)."
@@ -214,7 +218,7 @@ export class AdvancedCodeExplainer {
 
   private explainComplexity(explanations: ExplanationItem[]): void {
     // BST complexity analysis
-    if (/typedef struct.*Node.*left.*right/s.test(this.code)) {
+    if (/typedef struct.*Node.*left.*right/.test(this.code.replace(/\n/g, ' '))) {
       explanations.push({
         title: "Time & Space Complexity Analysis",
         text: "BST operations: O(log n) average case for balanced trees, O(n) worst case for skewed trees. Space complexity: O(n) for storage + O(log n) average recursion depth. The performance depends heavily on input order - random insertion creates balanced trees, sorted input creates linked-list-like structures."
@@ -222,7 +226,7 @@ export class AdvancedCodeExplainer {
     }
     
     // General complexity hints
-    const hasNestedLoops = /for.*for|while.*while/s.test(this.code)
+    const hasNestedLoops = /for.*for|while.*while/.test(this.code.replace(/\n/g, ' '))
     if (hasNestedLoops) {
       explanations.push({
         title: "Complexity Warning",
@@ -282,7 +286,7 @@ export class AdvancedCodeExplainer {
 
   private findRecursiveFunctions(): string[] {
     const functions: string[] = []
-    const functionRegex = /(\w+)\s*\([^)]*\)\s*\{[^}]*\1\s*\(/gs
+    const functionRegex = /(\w+)\s*\([^)]*\)\s*\{[^}]*\1\s*\(/g
     let match
     
     while ((match = functionRegex.exec(this.code)) !== null) {
@@ -340,7 +344,7 @@ export class AdvancedCodeExplainer {
 
   private estimateRecursionDepth(): number {
     // Estimate based on algorithm type
-    if (/typedef struct.*Node.*left.*right/s.test(this.code)) {
+    if (/typedef struct.*Node.*left.*right/.test(this.code.replace(/\n/g, ' '))) {
       return 10 // Typical BST depth
     }
     if (/fibonacci|factorial/i.test(this.code)) {
