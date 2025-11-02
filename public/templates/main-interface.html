@@ -3,88 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeAnatomy Interface</title>
+    <title>CodeAnatomy - C Code Explainer</title>
 </head>
 <body>
     <div id="main-interface" class="main-interface">
         <!-- Header -->
-        <header class="header fade-in">
+        <header class="header">
             <div class="container">
                 <div class="header-content">
                     <div class="logo">
                         <img src="/codeanatomy_logo.png" alt="CodeAnatomy Logo" class="logo-image">
                         <div class="logo-content">
                             <h1 class="logo-text">CodeAnatomy</h1>
-                            <span class="logo-subtitle">C Program Visualizer</span>
+                            <span class="logo-subtitle">C Code Explainer</span>
                         </div>
                     </div>
-                    <nav class="nav-menu">
-                        <button id="new-project-btn" class="nav-btn glow-effect">New Project</button>
-                        <button id="examples-btn" class="nav-btn">Examples</button>
-                        <button id="settings-btn" class="nav-btn">Settings</button>
-                    </nav>
+                    <div class="header-actions">
+                        <button id="clear-btn" class="action-btn secondary">Clear</button>
+                        <button id="example-btn" class="action-btn secondary">Load Example</button>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content Area -->
-        <main class="main-content slide-up">
+        <!-- Main Content -->
+        <main class="main-content">
             <div class="container">
-                <div class="workspace">
-                    <!-- Code Editor Panel -->
-                    <div class="panel code-panel">
-                        <div class="panel-header">
-                            <h3 class="panel-title">C Code Editor</h3>
-                            <div class="panel-controls">
-                                <button id="run-btn" class="control-btn primary glow-effect">Run</button>
-                                <button id="step-btn" class="control-btn">Step</button>
-                                <button id="reset-btn" class="control-btn">Reset</button>
-                            </div>
+                <div class="content-grid">
+                    <!-- Code Input Section -->
+                    <section class="code-section">
+                        <div class="section-header">
+                            <h2 class="section-title">Your C Code</h2>
+                            <button id="explain-btn" class="explain-btn">
+                                <span class="btn-icon">🔍</span>
+                                Explain Code
+                            </button>
                         </div>
-                        <div class="panel-content">
-                            <textarea id="code-editor" class="code-editor" placeholder="Enter your C code here..."></textarea>
-                        </div>
-                    </div>
+                        <div class="code-container">
+                            <textarea id="code-input" class="code-input" placeholder="Paste your C code here...
 
-                    <!-- Visualization Panel -->
-                    <div class="panel viz-panel">
-                        <div class="panel-header">
-                            <h3 class="panel-title">Memory & Execution Visualizer</h3>
-                            <div class="viz-controls">
-                                <button id="memory-view-btn" class="viz-btn active">Memory</button>
-                                <button id="stack-view-btn" class="viz-btn">Stack</button>
-                                <button id="heap-view-btn" class="viz-btn">Heap</button>
-                            </div>
-                        </div>
-                        <div class="panel-content">
-                            <canvas id="visualization-canvas" class="viz-canvas"></canvas>
-                        </div>
-                    </div>
+Example:
+#include <stdio.h>
 
-                    <!-- Data Structure Panel -->
-                    <div class="panel ds-panel">
-                        <div class="panel-header">
-                            <h3 class="panel-title">Data Structures</h3>
+int main() {
+    int x = 10;
+    int y = 20;
+    printf(&quot;Sum: %d&quot;, x + y);
+    return 0;
+}"></textarea>
                         </div>
-                        <div class="panel-content">
-                            <div id="data-structures-container" class="ds-container">
-                                <!-- Dynamic data structure visualizations will be inserted here -->
+                    </section>
+
+                    <!-- Explanation Section -->
+                    <section class="explanation-section">
+                        <div class="section-header">
+                            <h2 class="section-title">Code Explanation</h2>
+                            <div class="explanation-status">
+                                <span id="status-indicator" class="status-indicator ready"></span>
+                                <span id="status-text" class="status-text">Ready to explain</span>
                             </div>
                         </div>
-                    </div>
+                        <div class="explanation-container">
+                            <div id="explanation-content" class="explanation-content">
+                                <div class="welcome-message">
+                                    <div class="welcome-icon">📖</div>
+                                    <h3>Welcome to CodeAnatomy</h3>
+                                    <p>Paste your C code on the left and click "Explain Code" to get a detailed breakdown of what your program does.</p>
+                                    <div class="features">
+                                        <div class="feature">✨ Line-by-line explanations</div>
+                                        <div class="feature">🧠 Logic flow analysis</div>
+                                        <div class="feature">💾 Memory usage insights</div>
+                                        <div class="feature">🔧 Best practices tips</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
-                <!-- Bottom Info Panel -->
-                <div class="info-panel slide-up">
-                    <div class="info-tabs">
-                        <button id="console-tab" class="info-tab active">Console</button>
-                        <button id="memory-tab" class="info-tab">Memory Info</button>
-                        <button id="performance-tab" class="info-tab">Performance</button>
+                <!-- Memory Stats Panel -->
+                <div class="memory-panel">
+                    <div class="memory-header">
+                        <h3 class="memory-title">Memory Analysis</h3>
                     </div>
-                    <div class="info-content">
-                        <div id="console-output" class="console-output"></div>
-                        <div id="memory-info" class="memory-info hidden"></div>
-                        <div id="performance-info" class="performance-info hidden"></div>
+                    <div class="memory-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Stack Usage</div>
+                            <div class="stat-value">
+                                <span id="stack-used">0</span> / <span id="stack-total">8192</span> bytes
+                            </div>
+                            <div class="stat-bar">
+                                <div id="stack-progress" class="stat-progress"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Heap Usage</div>
+                            <div class="stat-value">
+                                <span id="heap-used">0</span> / <span id="heap-total">65536</span> bytes
+                            </div>
+                            <div class="stat-bar">
+                                <div id="heap-progress" class="stat-progress"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Active Frames</div>
+                            <div class="stat-value">
+                                <span id="active-frames">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Memory Leaks</div>
+                            <div class="stat-value">
+                                <span id="memory-leaks">0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

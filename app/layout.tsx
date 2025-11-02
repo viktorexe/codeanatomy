@@ -2,9 +2,9 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'CodeAnatomy - C Program Visualizer',
-  description: 'Interactive web-based visualizer that reveals the internal mechanics of C programs. Visualize memory, data structures, and system-level behavior in real-time.',
-  keywords: ['C programming', 'memory visualization', 'data structures', 'programming education', 'code visualizer'],
+  title: 'CodeAnatomy - C Code Explainer',
+  description: 'Intelligent C code explainer that breaks down your programs line-by-line. Understand what your C code does with detailed explanations and memory analysis.',
+  keywords: ['C programming', 'code explainer', 'programming education', 'code analysis', 'C tutorial'],
   authors: [{ name: 'CodeAnatomy Team' }],
   viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
@@ -13,23 +13,23 @@ export const metadata: Metadata = {
     apple: '/codeanatomy_logo.png',
   },
   openGraph: {
-    title: 'CodeAnatomy - C Program Visualizer',
-    description: 'Interactive web-based visualizer for C programs, memory, and data structures',
+    title: 'CodeAnatomy - C Code Explainer',
+    description: 'Intelligent C code explainer with line-by-line analysis and memory insights',
     url: 'https://codeanatomy.vercel.app',
     siteName: 'CodeAnatomy',
     images: [{
       url: '/codeanatomy_logo.png',
       width: 1200,
       height: 630,
-      alt: 'CodeAnatomy - C Program Visualizer',
+      alt: 'CodeAnatomy - C Code Explainer',
     }],
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CodeAnatomy - C Program Visualizer',
-    description: 'Interactive web-based visualizer for C programs, memory, and data structures',
+    title: 'CodeAnatomy - C Code Explainer',
+    description: 'Intelligent C code explainer with line-by-line analysis and memory insights',
     images: ['/codeanatomy_logo.png'],
   },
 }

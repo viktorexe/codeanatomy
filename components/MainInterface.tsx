@@ -1,16 +1,13 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { CodeEditor } from './CodeEditor'
-import { VisualizationCanvas } from './VisualizationCanvas'
-import { ConsoleOutput } from './ConsoleOutput'
+import { CodeExplainer } from '@/utils/CodeExplainer'
 import { MemoryManager } from '@/utils/MemoryManager'
-import { CParser } from '@/utils/CParser'
 
 export default function MainInterface() {
   const interfaceRef = useRef<HTMLDivElement>(null)
+  const codeExplainer = useRef(new CodeExplainer())
   const memoryManager = useRef(new MemoryManager())
-  const cParser = useRef(new CParser())
 
   useEffect(() => {
     // Load HTML template
@@ -30,296 +27,189 @@ export default function MainInterface() {
   }, [])
 
   const initializeEventListeners = () => {
-    // Run button functionality
-    const runBtn = document.getElementById('run-btn')
-    if (runBtn) {
-      runBtn.addEventListener('click', handleRunCode)
+    // Explain button functionality
+    const explainBtn = document.getElementById('explain-btn')
+    if (explainBtn) {
+      explainBtn.addEventListener('click', handleExplainCode)
     }
 
-    // Step button functionality
-    const stepBtn = document.getElementById('step-btn')
-    if (stepBtn) {
-      stepBtn.addEventListener('click', handleStepCode)
+    // Clear button functionality
+    const clearBtn = document.getElementById('clear-btn')
+    if (clearBtn) {
+      clearBtn.addEventListener('click', handleClearCode)
     }
 
-    // Reset button functionality
-    const resetBtn = document.getElementById('reset-btn')
-    if (resetBtn) {
-      resetBtn.addEventListener('click', handleResetCode)
+    // Example button functionality
+    const exampleBtn = document.getElementById('example-btn')
+    if (exampleBtn) {
+      exampleBtn.addEventListener('click', handleLoadExample)
     }
-
-    // Tab switching functionality
-    const tabs = document.querySelectorAll('.info-tab')
-    tabs.forEach(tab => {
-      tab.addEventListener('click', handleTabSwitch)
-    })
-
-    // Visualization view switching
-    const vizBtns = document.querySelectorAll('.viz-btn')
-    vizBtns.forEach(btn => {
-      btn.addEventListener('click', handleVizViewSwitch)
-    })
   }
 
-  const handleRunCode = () => {
-    const codeEditor = document.getElementById('code-editor') as HTMLTextAreaElement
-    const consoleOutput = document.getElementById('console-output')
+  const handleExplainCode = () => {
+    const codeInput = document.getElementById('code-input') as HTMLTextAreaElement
+    const explanationContent = document.getElementById('explanation-content')
+    const statusIndicator = document.getElementById('status-indicator')
+    const statusText = document.getElementById('status-text')
     
-    if (codeEditor && consoleOutput) {
-      const code = codeEditor.value
+    if (codeInput && explanationContent && statusIndicator && statusText) {
+      const code = codeInput.value
       
       if (!code.trim()) {
-        updateConsole('Error: Please enter some C code to run.')
+        updateStatus('error', 'Please enter some C code to explain')
         return
       }
 
-      updateConsole('Parsing C code...')
+      updateStatus('processing', 'Analyzing your code...')
       
-      try {
-        const parseResult = cParser.current.parse(code)
-        if (parseResult.success) {
-          updateConsole('Code parsed successfully. Starting execution...')
-          memoryManager.current.reset()
-          executeCode(parseResult.ast)
-        } else {
-          updateConsole(`Parse Error: ${parseResult.error}`)
+      // Simulate processing delay for better UX
+      setTimeout(() => {
+        try {
+          const explanations = codeExplainer.current.explain(code)
+          const memoryStats = codeExplainer.current.estimateMemoryUsage()
+          
+          displayExplanations(explanations)
+          updateMemoryStats(memoryStats)
+          updateStatus('complete', 'Code analysis complete')
+        } catch (error) {
+          updateStatus('error', 'Error analyzing code')
+          console.error('Explanation error:', error)
         }
-      } catch (error) {
-        updateConsole(`Error: ${error}`)
-      }
+      }, 1000)
     }
   }
 
-  const handleStepCode = () => {
-    const consoleOutput = document.getElementById('console-output')
-    if (consoleOutput) {
-      updateConsole('Step execution not yet implemented.')
+  const handleClearCode = () => {
+    const codeInput = document.getElementById('code-input') as HTMLTextAreaElement
+    const explanationContent = document.getElementById('explanation-content')
+    
+    if (codeInput) {
+      codeInput.value = ''
+    }
+    
+    if (explanationContent) {
+      explanationContent.innerHTML = getWelcomeMessage()
+    }
+    
+    updateStatus('ready', 'Ready to explain')
+    resetMemoryStats()
+  }
+
+  const handleLoadExample = () => {
+    const codeInput = document.getElementById('code-input') as HTMLTextAreaElement
+    
+    if (codeInput) {
+      const exampleCode = `#include <stdio.h>
+
+int main() {
+    int x = 10;
+    int y = 20;
+    int sum = x + y;
+    
+    printf("First number: %d\\n", x);
+    printf("Second number: %d\\n", y);
+    printf("Sum: %d\\n", sum);
+    
+    return 0;
+}`
+      
+      codeInput.value = exampleCode
+      updateStatus('ready', 'Example loaded - click Explain Code')
     }
   }
 
-  const handleResetCode = () => {
-    const consoleOutput = document.getElementById('console-output')
-    if (consoleOutput) {
-      consoleOutput.innerHTML = ''
-      memoryManager.current.reset()
-      updateVisualization()
+  const updateStatus = (type: 'ready' | 'processing' | 'complete' | 'error', message: string) => {
+    const statusIndicator = document.getElementById('status-indicator')
+    const statusText = document.getElementById('status-text')
+    
+    if (statusIndicator && statusText) {
+      statusIndicator.className = `status-indicator ${type}`
+      statusText.textContent = message
     }
   }
 
-  const handleTabSwitch = (event: Event) => {
-    const clickedTab = event.target as HTMLElement
-    const tabId = clickedTab.id
+  const displayExplanations = (explanations: any[]) => {
+    const explanationContent = document.getElementById('explanation-content')
     
-    // Remove active class from all tabs
-    document.querySelectorAll('.info-tab').forEach(tab => {
-      tab.classList.remove('active')
-    })
-    
-    // Add active class to clicked tab
-    clickedTab.classList.add('active')
-    
-    // Hide all content panels
-    document.querySelectorAll('.console-output, .memory-info, .performance-info').forEach(panel => {
-      panel.classList.add('hidden')
-    })
-    
-    // Show corresponding content panel
-    switch (tabId) {
-      case 'console-tab':
-        document.getElementById('console-output')?.classList.remove('hidden')
-        break
-      case 'memory-tab':
-        document.getElementById('memory-info')?.classList.remove('hidden')
-        updateMemoryInfo()
-        break
-      case 'performance-tab':
-        document.getElementById('performance-info')?.classList.remove('hidden')
-        updatePerformanceInfo()
-        break
-    }
-  }
-
-  const handleVizViewSwitch = (event: Event) => {
-    const clickedBtn = event.target as HTMLElement
-    
-    // Remove active class from all viz buttons
-    document.querySelectorAll('.viz-btn').forEach(btn => {
-      btn.classList.remove('active')
-    })
-    
-    // Add active class to clicked button
-    clickedBtn.classList.add('active')
-    
-    // Update visualization based on selected view
-    const viewType = clickedBtn.textContent?.toLowerCase() || 'memory'
-    updateVisualization(viewType)
-  }
-
-  const executeCode = (ast: any) => {
-    // Basic execution simulation
-    updateConsole('Executing main function...')
-    
-    // Simulate memory allocation
-    memoryManager.current.allocateStack('main', 1024)
-    updateConsole('Stack frame allocated for main()')
-    
-    // Update visualization
-    updateVisualization()
-    
-    updateConsole('Execution completed.')
-  }
-
-  const updateConsole = (message: string) => {
-    const consoleOutput = document.getElementById('console-output')
-    if (consoleOutput) {
-      const timestamp = new Date().toLocaleTimeString()
-      consoleOutput.innerHTML += `<div>[${timestamp}] ${message}</div>`
-      consoleOutput.scrollTop = consoleOutput.scrollHeight
-    }
-  }
-
-  const updateVisualization = (viewType: string = 'memory') => {
-    const canvas = document.getElementById('visualization-canvas') as HTMLCanvasElement
-    if (canvas) {
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (explanationContent) {
+      let html = '<div class="code-explanation">'
+      
+      explanations.forEach((explanation, index) => {
+        html += `
+          <div class="explanation-block fade-in" style="animation-delay: ${index * 0.1}s">
+            <div class="explanation-title">${explanation.title}</div>
+            <div class="explanation-text">${explanation.content}</div>
+        `
         
-        // Set canvas size
-        canvas.width = canvas.offsetWidth
-        canvas.height = canvas.offsetHeight
-        
-        // Draw based on view type
-        switch (viewType) {
-          case 'memory':
-            drawMemoryView(ctx)
-            break
-          case 'stack':
-            drawStackView(ctx)
-            break
-          case 'heap':
-            drawHeapView(ctx)
-            break
+        if (explanation.codeLines && explanation.codeLines.length > 0) {
+          explanation.codeLines.forEach((line: string) => {
+            html += `<div class="code-line">${line}</div>`
+          })
         }
-      }
+        
+        html += '</div>'
+      })
+      
+      html += '</div>'
+      explanationContent.innerHTML = html
     }
   }
 
-  const drawMemoryView = (ctx: CanvasRenderingContext2D) => {
-    const width = ctx.canvas.width
-    const height = ctx.canvas.height
-    
-    // Draw memory sections
-    ctx.fillStyle = '#2a2a2a'
-    ctx.fillRect(10, 10, width - 20, height - 20)
-    
-    ctx.strokeStyle = '#00ff88'
-    ctx.lineWidth = 2
-    ctx.strokeRect(10, 10, width - 20, height - 20)
-    
-    // Draw memory labels
-    ctx.fillStyle = '#ffffff'
-    ctx.font = '14px monospace'
-    ctx.fillText('Memory Layout', 20, 35)
-    
-    // Draw stack section
-    const stackHeight = height * 0.6
-    ctx.fillStyle = '#1a4a3a'
-    ctx.fillRect(20, 50, width - 40, stackHeight - 60)
-    ctx.strokeStyle = '#00ff88'
-    ctx.strokeRect(20, 50, width - 40, stackHeight - 60)
-    ctx.fillStyle = '#00ff88'
-    ctx.fillText('Stack', 30, 70)
-    
-    // Draw heap section
-    ctx.fillStyle = '#4a1a1a'
-    ctx.fillRect(20, stackHeight, width - 40, height - stackHeight - 20)
-    ctx.strokeStyle = '#ff6b6b'
-    ctx.strokeRect(20, stackHeight, width - 40, height - stackHeight - 20)
-    ctx.fillStyle = '#ff6b6b'
-    ctx.fillText('Heap', 30, stackHeight + 20)
+  const getWelcomeMessage = () => {
+    return `
+      <div class="welcome-message">
+        <div class="welcome-icon">📖</div>
+        <h3>Welcome to CodeAnatomy</h3>
+        <p>Paste your C code on the left and click "Explain Code" to get a detailed breakdown of what your program does.</p>
+        <div class="features">
+          <div class="feature">✨ Line-by-line explanations</div>
+          <div class="feature">🧠 Logic flow analysis</div>
+          <div class="feature">💾 Memory usage insights</div>
+          <div class="feature">🔧 Best practices tips</div>
+        </div>
+      </div>
+    `
   }
 
-  const drawStackView = (ctx: CanvasRenderingContext2D) => {
-    const width = ctx.canvas.width
-    const height = ctx.canvas.height
+  const updateMemoryStats = (stats: any) => {
+    const stackUsed = document.getElementById('stack-used')
+    const stackProgress = document.getElementById('stack-progress')
+    const heapUsed = document.getElementById('heap-used')
+    const heapProgress = document.getElementById('heap-progress')
+    const activeFrames = document.getElementById('active-frames')
+    const memoryLeaks = document.getElementById('memory-leaks')
     
-    ctx.fillStyle = '#1a4a3a'
-    ctx.fillRect(10, 10, width - 20, height - 20)
+    if (stackUsed && stackProgress) {
+      stackUsed.textContent = stats.stackUsed.toString()
+      const stackPercent = (stats.stackUsed / 8192) * 100
+      stackProgress.style.width = `${stackPercent}%`
+    }
     
-    ctx.strokeStyle = '#00ff88'
-    ctx.lineWidth = 2
-    ctx.strokeRect(10, 10, width - 20, height - 20)
+    if (heapUsed && heapProgress) {
+      heapUsed.textContent = stats.heapUsed.toString()
+      const heapPercent = (stats.heapUsed / 65536) * 100
+      heapProgress.style.width = `${heapPercent}%`
+    }
     
-    ctx.fillStyle = '#ffffff'
-    ctx.font = '14px monospace'
-    ctx.fillText('Stack View', 20, 35)
+    if (activeFrames) {
+      activeFrames.textContent = stats.activeFrames.toString()
+    }
     
-    // Draw stack frames
-    const frames = memoryManager.current.getStackFrames()
-    let yOffset = 60
-    
-    frames.forEach((frame, index) => {
-      ctx.fillStyle = '#2a2a2a'
-      ctx.fillRect(30, yOffset, width - 60, 40)
-      ctx.strokeStyle = '#00ff88'
-      ctx.strokeRect(30, yOffset, width - 60, 40)
-      
-      ctx.fillStyle = '#00ff88'
-      ctx.fillText(`${frame.name} (${frame.size} bytes)`, 40, yOffset + 25)
-      
-      yOffset += 50
+    if (memoryLeaks) {
+      memoryLeaks.textContent = stats.memoryLeaks.toString()
+    }
+  }
+
+  const resetMemoryStats = () => {
+    updateMemoryStats({
+      stackUsed: 0,
+      heapUsed: 0,
+      activeFrames: 0,
+      memoryLeaks: 0
     })
   }
 
-  const drawHeapView = (ctx: CanvasRenderingContext2D) => {
-    const width = ctx.canvas.width
-    const height = ctx.canvas.height
-    
-    ctx.fillStyle = '#4a1a1a'
-    ctx.fillRect(10, 10, width - 20, height - 20)
-    
-    ctx.strokeStyle = '#ff6b6b'
-    ctx.lineWidth = 2
-    ctx.strokeRect(10, 10, width - 20, height - 20)
-    
-    ctx.fillStyle = '#ffffff'
-    ctx.font = '14px monospace'
-    ctx.fillText('Heap View', 20, 35)
-    
-    ctx.fillStyle = '#ff6b6b'
-    ctx.fillText('No heap allocations yet', 30, 70)
-  }
 
-  const updateMemoryInfo = () => {
-    const memoryInfo = document.getElementById('memory-info')
-    if (memoryInfo) {
-      const info = memoryManager.current.getMemoryInfo()
-      memoryInfo.innerHTML = `
-        <div style="font-family: monospace; line-height: 1.6;">
-          <div><strong>Stack Usage:</strong> ${info.stackUsed} / ${info.stackTotal} bytes</div>
-          <div><strong>Heap Usage:</strong> ${info.heapUsed} / ${info.heapTotal} bytes</div>
-          <div><strong>Active Frames:</strong> ${info.activeFrames}</div>
-          <div><strong>Memory Leaks:</strong> ${info.leaks}</div>
-        </div>
-      `
-    }
-  }
-
-  const updatePerformanceInfo = () => {
-    const performanceInfo = document.getElementById('performance-info')
-    if (performanceInfo) {
-      performanceInfo.innerHTML = `
-        <div style="font-family: monospace; line-height: 1.6;">
-          <div><strong>Execution Time:</strong> 0.001s</div>
-          <div><strong>Memory Allocations:</strong> 1</div>
-          <div><strong>Function Calls:</strong> 1</div>
-          <div><strong>Big-O Complexity:</strong> O(1)</div>
-        </div>
-      `
-    }
-  }
 
   return <div ref={interfaceRef} className="main-interface-container" />
 }
