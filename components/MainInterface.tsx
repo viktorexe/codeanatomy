@@ -151,41 +151,15 @@ int main() {
     const summaryText = document.getElementById('summary-text')
     
     if (summaryText) {
-      summaryText.textContent = analysis.summary.overview
+      summaryText.textContent = analysis.summary
     }
     
     if (explanationArea) {
-      let html = '<div class="analysis-results">'
-      
-      // Program Summary
-      html += `
-        <div class="program-summary">
-          <div class="summary-title">Program Summary (${analysis.summary.complexity})</div>
-          <div class="summary-description">${analysis.summary.overview}</div>
+      const html = `
+        <div class="detailed-explanation">
+          <div class="explanation-text">${analysis.detailedExplanation}</div>
         </div>
       `
-      
-      // Components
-      html += '<div class="components-list">'
-      
-      analysis.components.forEach((component: any, index: number) => {
-        html += `
-          <div class="component-item" style="animation-delay: ${index * 0.1}s">
-            <div class="component-header">
-              <div class="component-title">${component.title}</div>
-              <div class="component-type">${component.type.toUpperCase()}</div>
-            </div>
-            <div class="component-description">${component.description}</div>
-        `
-        
-        if (component.codeSnippet) {
-          html += `<div class="code-snippet">${component.codeSnippet}</div>`
-        }
-        
-        html += '</div>'
-      })
-      
-      html += '</div></div>'
       explanationArea.innerHTML = html
     }
   }
