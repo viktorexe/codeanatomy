@@ -16,11 +16,19 @@
                 </h1>
                 <p class="hero-subtitle">Intelligent Python code analysis powered by AST parsing. Add meaningful comments automatically and understand your codebase instantly.</p>
                 
-                <button id="addComments" class="cta-button">
-                    <span class="cta-icon">🐍</span>
-                    <span>Start Analyzing Python Code</span>
-                    <span class="cta-arrow">→</span>
-                </button>
+                <div class="button-group">
+                    <button id="addComments" class="cta-button">
+                        <span class="cta-icon">🐍</span>
+                        <span>Start Analyzing Python Code</span>
+                        <span class="cta-arrow">→</span>
+                    </button>
+                    <a href="https://github.com/viktorexe/codeanatomy" target="_blank" rel="noopener" class="github-button" title="View Source on GitHub">
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                        </svg>
+                        <span>GitHub</span>
+                    </a>
+                </div>
                 
                 <div class="features-grid">
                     <div class="feature-card">
@@ -42,79 +50,62 @@
             </div>
         </div>
         
-        <div class="sidebar-nav">
-            <button class="nav-btn" id="featuresBtn" title="Features">
-                <span class="nav-icon">✨</span>
-                <span class="nav-label">Features</span>
-            </button>
-            <button class="nav-btn" id="aboutBtn" title="About">
-                <span class="nav-icon">ℹ️</span>
-                <span class="nav-label">About</span>
-            </button>
-            <a href="https://github.com/viktorexe/codeanatomy" target="_blank" rel="noopener" class="nav-btn" title="GitHub">
-                <span class="nav-icon">🔗</span>
-                <span class="nav-label">GitHub</span>
-            </a>
-        </div>
-        
-        <div id="featuresModal" class="info-modal">
-            <div class="modal-content">
-                <button class="modal-close" data-modal="featuresModal">×</button>
-                <h2 class="modal-title">✨ Features</h2>
-                <div class="modal-body">
-                    <div class="feature-detail">
-                        <div class="feature-detail-icon">🔍</div>
-                        <h3>Deep Code Analysis</h3>
-                        <p>Uses Python's AST (Abstract Syntax Tree) to understand your code structure at a fundamental level, identifying functions, classes, loops, conditionals, and more.</p>
-                    </div>
-                    <div class="feature-detail">
-                        <div class="feature-detail-icon">💬</div>
-                        <h3>Intelligent Comments</h3>
-                        <p>Generates contextual, meaningful comments based on code patterns and naming conventions. Comments explain what your code does in plain English.</p>
-                    </div>
-                    <div class="feature-detail">
-                        <div class="feature-detail-icon">⚡</div>
-                        <h3>Real-Time Processing</h3>
-                        <p>Instant analysis with no delays. No API keys, no external services - everything runs locally for maximum speed and privacy.</p>
-                    </div>
-                    <div class="feature-detail">
-                        <div class="feature-detail-icon">🎨</div>
-                        <h3>Syntax Highlighting</h3>
-                        <p>Beautiful code editor with live syntax highlighting for both input and output. Easy side-by-side comparison with copy functionality.</p>
-                    </div>
+        <section class="info-section">
+            <div class="section-header">
+                <h2>✨ Key Features</h2>
+            </div>
+            <div class="features-detail-grid">
+                <div class="feature-detail-card">
+                    <div class="feature-detail-icon">🔍</div>
+                    <h3>Deep Code Analysis</h3>
+                    <p>Uses Python's AST (Abstract Syntax Tree) to understand your code structure at a fundamental level, identifying functions, classes, loops, conditionals, and more.</p>
+                </div>
+                <div class="feature-detail-card">
+                    <div class="feature-detail-icon">💬</div>
+                    <h3>Intelligent Comments</h3>
+                    <p>Generates contextual, meaningful comments based on code patterns and naming conventions. Comments explain what your code does in plain English.</p>
+                </div>
+                <div class="feature-detail-card">
+                    <div class="feature-detail-icon">⚡</div>
+                    <h3>Real-Time Processing</h3>
+                    <p>Instant analysis with no delays. No API keys, no external services - everything runs locally for maximum speed and privacy.</p>
+                </div>
+                <div class="feature-detail-card">
+                    <div class="feature-detail-icon">🎨</div>
+                    <h3>Syntax Highlighting</h3>
+                    <p>Beautiful code editor with live syntax highlighting for both input and output. Easy side-by-side comparison with copy functionality.</p>
                 </div>
             </div>
-        </div>
+        </section>
         
-        <div id="aboutModal" class="info-modal">
-            <div class="modal-content">
-                <button class="modal-close" data-modal="aboutModal">×</button>
-                <h2 class="modal-title">ℹ️ About Code Anatomy</h2>
-                <div class="modal-body">
-                    <div class="about-section">
-                        <h3>What is Code Anatomy?</h3>
-                        <p>Code Anatomy is an intelligent Python code documentation tool that automatically adds meaningful comments to your code. It helps developers understand complex codebases faster and maintain better documentation standards.</p>
-                    </div>
-                    <div class="about-section">
-                        <h3>How It Works</h3>
-                        <p>The tool uses Python's built-in AST (Abstract Syntax Tree) parser to analyze your code structure. It identifies key elements like function definitions, class declarations, control flow statements, and variable assignments, then generates human-readable comments that explain what each part does.</p>
-                    </div>
-                    <div class="about-section">
-                        <h3>Technology Stack</h3>
-                        <ul class="tech-list">
-                            <li><strong>Backend:</strong> Flask (Python)</li>
-                            <li><strong>Analysis:</strong> Python AST Module</li>
-                            <li><strong>Frontend:</strong> Vanilla JavaScript</li>
-                            <li><strong>Styling:</strong> Custom CSS with modern effects</li>
-                        </ul>
-                    </div>
-                    <div class="about-section">
-                        <h3>Created By</h3>
-                        <p class="creators">Built with ❤️ by <strong>Vansh</strong>, <strong>Manya</strong>, and <strong>Priyanshu</strong></p>
-                    </div>
+        <section class="about-section">
+            <div class="section-header">
+                <h2>ℹ️ About Code Anatomy</h2>
+            </div>
+            <div class="about-content">
+                <div class="about-card">
+                    <h3>What is Code Anatomy?</h3>
+                    <p>Code Anatomy is an intelligent Python code documentation tool that automatically adds meaningful comments to your code. It helps developers understand complex codebases faster and maintain better documentation standards.</p>
+                </div>
+                <div class="about-card">
+                    <h3>How It Works</h3>
+                    <p>The tool uses Python's built-in AST (Abstract Syntax Tree) parser to analyze your code structure. It identifies key elements like function definitions, class declarations, control flow statements, and variable assignments, then generates human-readable comments that explain what each part does.</p>
+                </div>
+                <div class="about-card">
+                    <h3>Technology Stack</h3>
+                    <ul class="tech-list">
+                        <li><strong>Backend:</strong> Flask (Python)</li>
+                        <li><strong>Analysis:</strong> Python AST Module</li>
+                        <li><strong>Frontend:</strong> Vanilla JavaScript</li>
+                        <li><strong>Styling:</strong> Custom CSS with modern effects</li>
+                    </ul>
                 </div>
             </div>
-        </div>
+        </section>
+        
+        <footer class="home-footer">
+            <p>Built with ❤️ by <span class="creator-name">Vansh</span>, <span class="creator-name">Manya</span> & <span class="creator-name">Priyanshu</span></p>
+        </footer>
     </div>
 
     <div id="languageSelection" class="container hidden">

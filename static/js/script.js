@@ -1,46 +1,5 @@
 let currentLanguage = '';
 
-// Modal functionality
-const featuresBtn = document.getElementById('featuresBtn');
-const aboutBtn = document.getElementById('aboutBtn');
-const featuresModal = document.getElementById('featuresModal');
-const aboutModal = document.getElementById('aboutModal');
-const modalCloses = document.querySelectorAll('.modal-close');
-
-if (featuresBtn) {
-    featuresBtn.addEventListener('click', () => {
-        featuresModal.classList.add('active');
-    });
-}
-
-if (aboutBtn) {
-    aboutBtn.addEventListener('click', () => {
-        aboutModal.classList.add('active');
-    });
-}
-
-modalCloses.forEach(closeBtn => {
-    closeBtn.addEventListener('click', () => {
-        const modalId = closeBtn.getAttribute('data-modal');
-        document.getElementById(modalId).classList.remove('active');
-    });
-});
-
-// Close modal on outside click
-window.addEventListener('click', (e) => {
-    if (e.target.classList.contains('info-modal')) {
-        e.target.classList.remove('active');
-    }
-});
-
-// Close modal on Escape key
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        featuresModal.classList.remove('active');
-        aboutModal.classList.remove('active');
-    }
-});
-
 const homepage = document.getElementById('homepage');
 const languageSelection = document.getElementById('languageSelection');
 const editor = document.getElementById('editor');
