@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
-from analyzers import AdvancedPythonAnalyzer, AdvancedJavaScriptAnalyzer, AdvancedCAnalyzer
+from analyzers import AdvancedPythonAnalyzer
 from analyzers.ultra_code_fixer import UltraCodeFixer
 import logging
 import os
@@ -69,18 +69,8 @@ def analyze():
         })
     
     try:
-        if language == 'python':
-            analyzer = AdvancedPythonAnalyzer()
-            commented_code = analyzer.analyze(code)
-        elif language == 'javascript':
-            analyzer = AdvancedJavaScriptAnalyzer()
-            commented_code = analyzer.analyze(code)
-        elif language == 'c':
-            analyzer = AdvancedCAnalyzer()
-            commented_code = analyzer.analyze(code)
-        else:
-            logger.warning(f"Unsupported language: {language}")
-            return jsonify({'commented_code': code, 'error': 'Unsupported language', 'success': False})
+        analyzer = AdvancedPythonAnalyzer()
+        commented_code = analyzer.analyze(code)
         
         logger.info(f"Analysis completed successfully for {language}")
         return jsonify({'commented_code': commented_code, 'success': True})
