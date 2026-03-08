@@ -8,7 +8,7 @@ def get_groq_client():
     api_key = os.environ.get('GROQ_API_KEY')
     if not api_key:
         raise ValueError("GROQ_API_KEY environment variable is not set")
-    return Groq(api_key=api_key)
+    return Groq(api_key=api_key, max_retries=2)
 
 @app.route('/')
 def home():
