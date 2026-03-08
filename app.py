@@ -1,12 +1,15 @@
 from flask import Flask, render_template, request, jsonify
 from groq import Groq
 import os
-from dotenv import load_dotenv
-
-load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
-client = Groq(api_key=os.getenv('GROQ_API_KEY'))  # Initialize Groq AI client
+
+# Initialize Groq client with API key from environment
+api_key = os.environ.get('GROQ_API_KEY')
+if not api_key:
+    raise ValueError("GROQ_API_KEY environment variable is not set")
+
+client = Groq(api_key=api_key)
 
 @app.route('/')
 def home():
@@ -28,7 +31,7 @@ def add_comments():
         if not code or not language:
             return jsonify({'success': False, 'error': 'Code and language are required'})
 
-        if len(code) > 500000:  # 500KB limit
+        if len(code) > 500000:
             return jsonify({'success': False, 'error': 'Code too large. Maximum 500KB allowed'})
 
         # Use different prompts based on whether code already has comments
@@ -81,6 +84,3 @@ Code:
 def remove_comments():
     """API endpoint to remove comments from code (not yet implemented)"""
     return jsonify({'success': False, 'error': 'Not implemented yet'})
-
-# Vercel serverless function handler
-app = app
