@@ -4,12 +4,11 @@ import os
 
 app = Flask(__name__)
 
-# Initialize Groq client with API key from environment
-api_key = os.environ.get('GROQ_API_KEY')
-if not api_key:
-    raise ValueError("GROQ_API_KEY environment variable is not set")
-
-client = Groq(api_key=api_key)
+def get_groq_client():
+    api_key = os.environ.get('GROQ_API_KEY')
+    if not api_key:
+        raise ValueError("GROQ_API_KEY environment variable is not set")
+    return Groq(api_key=api_key)
 
 @app.route('/')
 def home():
@@ -58,6 +57,7 @@ Code:
 {code}"""
 
         # Call Groq AI API
+        client = get_groq_client()
         response = client.chat.completions.create(
             messages=[{
                 "role": "user",
