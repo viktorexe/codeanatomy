@@ -84,3 +84,6 @@ Code:
 def remove_comments():
     """API endpoint to remove comments from code (not yet implemented)"""
     return jsonify({'success': False, 'error': 'Not implemented yet'})
+
+if __name__ == '__main__':
+    app.run(debug=True)
