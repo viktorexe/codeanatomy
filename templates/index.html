@@ -3,47 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Anatomy</title>
+    <title>Code Anatomy — Intelligent Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { overflow-x: hidden; }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 60px rgba(255, 255, 255, 0.08), 0 0 120px rgba(255, 255, 255, 0.04);
+        }
+        
+        @keyframes morphBlob {
+            0%, 100% { 
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+            25% { 
+                border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+                transform: translate(50px, -50px) scale(1.1) rotate(90deg);
+            }
+            50% { 
+                border-radius: 50% 60% 30% 60% / 30% 50% 70% 40%;
+                transform: translate(-30px, 30px) scale(0.95) rotate(180deg);
+            }
+            75% { 
+                border-radius: 70% 30% 50% 50% / 40% 70% 30% 60%;
+                transform: translate(30px, 50px) scale(1.05) rotate(270deg);
+            }
+        }
+        
+        @keyframes morphBlob2 {
+            0%, 100% { 
+                border-radius: 40% 60% 60% 40% / 60% 30% 70% 40%;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+            33% { 
+                border-radius: 60% 40% 30% 70% / 50% 60% 40% 50%;
+                transform: translate(-60px, 40px) scale(1.15) rotate(120deg);
+            }
+            66% { 
+                border-radius: 30% 70% 40% 60% / 40% 50% 60% 50%;
+                transform: translate(40px, -30px) scale(0.9) rotate(240deg);
+            }
+        }
+        
+        @keyframes morphBlob3 {
+            0%, 100% { 
+                border-radius: 50% 50% 40% 60% / 50% 60% 40% 50%;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+            50% { 
+                border-radius: 60% 40% 50% 50% / 40% 50% 50% 60%;
+                transform: translate(-40px, -40px) scale(1.2) rotate(180deg);
+            }
+        }
+        
+        .blob-1 { animation: morphBlob 20s ease-in-out infinite; }
+        .blob-2 { animation: morphBlob2 25s ease-in-out infinite; }
+        .blob-3 { animation: morphBlob3 30s ease-in-out infinite; }
+        
+        .btn-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn-hover:hover {
+            transform: translateY(-2px);
+        }
+        
+        .fade-in {
+            animation: fadeIn 1s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .delay-100 { animation-delay: 0.1s; opacity: 0; }
+        .delay-200 { animation-delay: 0.2s; opacity: 0; }
+        .delay-300 { animation-delay: 0.3s; opacity: 0; }
+        .delay-400 { animation-delay: 0.4s; opacity: 0; }
+        
+        .grid-pattern {
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100px 100px;
+        }
+        
+        .shine {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .shine::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+        
+        .shine:hover::before {
+            left: 100%;
+        }
+    </style>
 </head>
-<body>
-    <div class="bg-gradient bg-gradient-1"></div>
-    <div class="bg-gradient bg-gradient-2"></div>
-    <div class="bg-gradient bg-gradient-3"></div>
-    
-    <div class="app">
-        <nav class="navbar">
-            <div class="logo">CODE ANATOMY</div>
-            <div class="nav-links">
-                <a href="#">Documentation</a>
-                <a href="#">Source Code</a>
-            </div>
-        </nav>
-
-        <main class="main">
-            <div class="content">
-                <h1 class="title">Intelligent Code<br>Documentation System</h1>
-                <p class="subtitle">Transform uncommented code into professionally documented software.<br>Enterprise-grade accuracy. Instant results.</p>
-                
-                <div class="actions">
-                    <button class="btn btn-primary" id="addCommentsBtn">
-                        <span>Add Comments</span>
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" stroke-width="1.5"/>
-                        </svg>
-                    </button>
-                    <button class="btn btn-secondary" id="removeCommentsBtn" disabled>
-                        <span>Remove Comments</span>
-                    </button>
-                </div>
-            </div>
-        </main>
+<body class="bg-black text-white min-h-screen grid-pattern">
+    <!-- Animated Background Blobs -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+        <div class="blob-1 absolute -top-40 -right-40 w-[900px] h-[900px] bg-gradient-to-br from-violet-600/40 via-purple-600/30 to-fuchsia-600/40 blur-[120px]"></div>
+        <div class="blob-2 absolute -bottom-40 -left-40 w-[800px] h-[800px] bg-gradient-to-tr from-blue-600/40 via-cyan-600/30 to-indigo-600/40 blur-[120px]"></div>
+        <div class="blob-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-br from-pink-600/30 via-rose-600/25 to-orange-600/30 blur-[120px]"></div>
     </div>
 
+    <!-- Navigation -->
+    <nav class="relative z-10 px-8 py-6 flex items-center justify-between">
+        <div class="text-sm font-bold tracking-[0.3em] text-white/90 fade-in">CODE ANATOMY</div>
+        <div class="flex items-center gap-8 fade-in delay-100">
+            <a href="#" class="text-sm text-white/50 hover:text-white transition-colors duration-300">Documentation</a>
+            <a href="https://github.com/viktorexe/codeanatomy" target="_blank" class="text-sm text-white/50 hover:text-white transition-colors duration-300">github.com/viktorexe/codeanatomy</a>
+        </div>
+    </nav>
 
+    <!-- Hero Section -->
+    <main class="relative z-10 flex items-center justify-center min-h-[calc(100vh-100px)] px-8">
+        <div class="max-w-5xl mx-auto text-center">
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-effect mb-8 fade-in delay-200">
+                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                <span class="text-xs font-medium text-white/70">Powered by Groq AI</span>
+            </div>
+
+            <!-- Main Heading -->
+            <h1 class="text-7xl md:text-8xl font-bold tracking-tight mb-6 fade-in delay-300">
+                <span class="gradient-text">Intelligent Code</span><br>
+                <span class="gradient-text">Documentation</span>
+            </h1>
+
+            <!-- Subheading -->
+            <p class="text-xl md:text-2xl text-white/40 font-light max-w-3xl mx-auto mb-12 leading-relaxed fade-in delay-400">
+                Transform uncommented code into professionally documented software.
+                <span class="text-white/60">Enterprise-grade accuracy. Instant results.</span>
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 fade-in delay-400">
+                <button id="addCommentsBtn" class="group relative px-8 py-4 bg-white text-black font-semibold rounded-xl btn-hover shine overflow-hidden">
+                    <span class="relative z-10 flex items-center gap-3">
+                        Add Comments
+                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </span>
+                </button>
+                <button id="removeCommentsBtn" class="px-8 py-4 glass-effect text-white/90 font-semibold rounded-xl btn-hover">
+                    Remove Comments
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 gap-8 max-w-xl mx-auto fade-in delay-400">
+                <div class="glass-effect rounded-2xl p-6 glow-effect">
+                    <div class="text-3xl font-bold mb-1">&lt;2s</div>
+                    <div class="text-sm text-white/40">Processing Time</div>
+                </div>
+                <div class="glass-effect rounded-2xl p-6 glow-effect">
+                    <div class="text-3xl font-bold mb-1">2+</div>
+                    <div class="text-sm text-white/40">Languages</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Gradient Line -->
+    <div class="fixed bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

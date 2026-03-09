@@ -16,6 +16,21 @@ const codeHighlight2 = document.getElementById('codeHighlight2');
 const MAX_FILE_SIZE = 500000; // 500KB limit
 const langMap = { python: 'python', c: 'c' }; // Language mapping for highlight.js
 
+// Get mode from URL
+const urlParams = new URLSearchParams(window.location.search);
+const mode = urlParams.get('mode') || 'add'; // 'add' or 'remove'
+
+// Update UI based on mode
+if (mode === 'remove') {
+    processBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Remove Comments
+    `;
+    document.querySelector('.tab span:last-child').textContent = 'uncommented';
+}
+
 // Show error toast
 function showError(message) {
     const toast = document.createElement('div');
@@ -215,7 +230,7 @@ copyBtn.addEventListener('click', async () => {
     }
 });
 
-// Process code with Groq API
+// Process code with Groq API or hardcoded logic
 processBtn.addEventListener('click', async () => {
     const code = codeInput.value.trim();
     const language = languageSelect.value;
@@ -227,17 +242,19 @@ processBtn.addEventListener('click', async () => {
         return;
     }
 
-    // Detect if code already has comments (20% threshold)
-    const commentLines = language === 'python' 
-        ? (code.match(/^\s*#/gm) || []).length
-        : (code.match(/\/\/|^\/\*|\*\//gm) || []).length;
-    const totalLines = code.split('\n').length;
-    const commentRatio = commentLines / totalLines;
+    if (mode === 'add') {
+        // Detect if code already has comments (20% threshold)
+        const commentLines = language === 'python' 
+            ? (code.match(/^\s*#/gm) || []).length
+            : (code.match(/\/\/|^\/\*|\*\//gm) || []).length;
+        const totalLines = code.split('\n').length;
+        const commentRatio = commentLines / totalLines;
 
-    // Confirm if user wants to add more comments to already-commented code
-    if (commentRatio > 0.2) {
-        if (!confirm('This code already has comments. Do you still want to add more comments?')) {
-            return;
+        // Confirm if user wants to add more comments to already-commented code
+        if (commentRatio > 0.2) {
+            if (!confirm('This code already has comments. Do you still want to add more comments?')) {
+                return;
+            }
         }
     }
 
@@ -248,16 +265,17 @@ processBtn.addEventListener('click', async () => {
     codeHighlight2.innerHTML = '<code></code>';
 
     try {
-        const response = await fetch('/api/add-comments', {
+        const endpoint = mode === 'add' ? '/api/add-comments' : '/api/remove-comments';
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, language, hasComments: commentRatio > 0.2 })
+            body: JSON.stringify({ code, language, hasComments: mode === 'add' })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            codeOutput.value = data.commented_code;
+            codeOutput.value = mode === 'add' ? data.commented_code : data.uncommented_code;
             updateOutputHighlight();
             statusText.textContent = 'Success';
         } else {
