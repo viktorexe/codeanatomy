@@ -1,10 +1,15 @@
-const addCommentsBtn = document.getElementById('addCommentsBtn');
-const removeCommentsBtn = document.getElementById('removeCommentsBtn');
-
-addCommentsBtn.addEventListener('click', () => {
+document.getElementById('cardAddComments').addEventListener('click', () => {
     window.location.href = '/editor?mode=add';
 });
 
-removeCommentsBtn.addEventListener('click', () => {
+document.getElementById('cardRemoveComments').addEventListener('click', () => {
     window.location.href = '/editor?mode=remove';
+});
+
+document.getElementById('cardVisualize').addEventListener('click', () => {
+    window.location.href = '/anatomy';
+});
+
+document.getElementById('cardComplexity').addEventListener('click', () => {
+    window.location.href = '/analysis';
 });

@@ -3,201 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Anatomy — Intelligent Documentation</title>
+    <title>Code Anatomy — Intelligent Code Analysis Platform</title>
+    <meta name="description" content="AI-powered code documentation, visualization, and complexity analysis for Python and C.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
-        body { overflow-x: hidden; }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        body { background: #050508; overflow-x: hidden; }
+
+        .ambient-glow {
+            position: fixed; top: -40%; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at 25% 0%, rgba(99,102,241,0.07) 0%, transparent 55%),
+                        radial-gradient(ellipse at 75% 0%, rgba(16,185,129,0.04) 0%, transparent 55%);
+            pointer-events: none; z-index: 0;
         }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .glow-effect {
-            box-shadow: 0 0 60px rgba(255, 255, 255, 0.08), 0 0 120px rgba(255, 255, 255, 0.04);
-        }
-        
-        @keyframes morphBlob {
-            0%, 100% { 
-                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-                transform: translate(0, 0) scale(1) rotate(0deg);
-            }
-            25% { 
-                border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
-                transform: translate(50px, -50px) scale(1.1) rotate(90deg);
-            }
-            50% { 
-                border-radius: 50% 60% 30% 60% / 30% 50% 70% 40%;
-                transform: translate(-30px, 30px) scale(0.95) rotate(180deg);
-            }
-            75% { 
-                border-radius: 70% 30% 50% 50% / 40% 70% 30% 60%;
-                transform: translate(30px, 50px) scale(1.05) rotate(270deg);
-            }
-        }
-        
-        @keyframes morphBlob2 {
-            0%, 100% { 
-                border-radius: 40% 60% 60% 40% / 60% 30% 70% 40%;
-                transform: translate(0, 0) scale(1) rotate(0deg);
-            }
-            33% { 
-                border-radius: 60% 40% 30% 70% / 50% 60% 40% 50%;
-                transform: translate(-60px, 40px) scale(1.15) rotate(120deg);
-            }
-            66% { 
-                border-radius: 30% 70% 40% 60% / 40% 50% 60% 50%;
-                transform: translate(40px, -30px) scale(0.9) rotate(240deg);
-            }
-        }
-        
-        @keyframes morphBlob3 {
-            0%, 100% { 
-                border-radius: 50% 50% 40% 60% / 50% 60% 40% 50%;
-                transform: translate(0, 0) scale(1) rotate(0deg);
-            }
-            50% { 
-                border-radius: 60% 40% 50% 50% / 40% 50% 50% 60%;
-                transform: translate(-40px, -40px) scale(1.2) rotate(180deg);
-            }
-        }
-        
-        .blob-1 { animation: morphBlob 20s ease-in-out infinite; }
-        .blob-2 { animation: morphBlob2 25s ease-in-out infinite; }
-        .blob-3 { animation: morphBlob3 30s ease-in-out infinite; }
-        
-        .btn-hover {
+
+        .feature-card {
+            border: 1px solid rgba(255,255,255,0.06);
+            border-top: 3px solid transparent;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer; position: relative; overflow: hidden;
         }
-        
-        .btn-hover:hover {
-            transform: translateY(-2px);
+        .feature-card:hover { transform: translateY(-6px); }
+        .feature-card:hover .card-arrow { transform: translate(3px, -3px); opacity: 1; }
+        .card-arrow { transition: all 0.3s; opacity: 0.3; }
+
+        /* Per-card colors */
+        .card-indigo {
+            border-top-color: #818cf8;
+            background: linear-gradient(180deg, rgba(99,102,241,0.08) 0%, rgba(10,10,15,0.95) 100%);
         }
-        
-        .fade-in {
-            animation: fadeIn 1s ease-out forwards;
+        .card-indigo:hover { box-shadow: 0 12px 48px rgba(99,102,241,0.2), 0 0 0 1px rgba(99,102,241,0.15); }
+        .card-indigo .icon-box { background: rgba(99,102,241,0.15); border-color: rgba(129,140,248,0.3); box-shadow: 0 0 20px rgba(99,102,241,0.15); }
+
+        .card-rose {
+            border-top-color: #fb7185;
+            background: linear-gradient(180deg, rgba(244,63,94,0.08) 0%, rgba(10,10,15,0.95) 100%);
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        .card-rose:hover { box-shadow: 0 12px 48px rgba(244,63,94,0.2), 0 0 0 1px rgba(244,63,94,0.15); }
+        .card-rose .icon-box { background: rgba(244,63,94,0.15); border-color: rgba(251,113,133,0.3); box-shadow: 0 0 20px rgba(244,63,94,0.15); }
+
+        .card-emerald {
+            border-top-color: #34d399;
+            background: linear-gradient(180deg, rgba(16,185,129,0.08) 0%, rgba(10,10,15,0.95) 100%);
         }
-        
-        .delay-100 { animation-delay: 0.1s; opacity: 0; }
-        .delay-200 { animation-delay: 0.2s; opacity: 0; }
-        .delay-300 { animation-delay: 0.3s; opacity: 0; }
-        .delay-400 { animation-delay: 0.4s; opacity: 0; }
-        
-        .grid-pattern {
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100px 100px;
+        .card-emerald:hover { box-shadow: 0 12px 48px rgba(16,185,129,0.2), 0 0 0 1px rgba(16,185,129,0.15); }
+        .card-emerald .icon-box { background: rgba(16,185,129,0.15); border-color: rgba(52,211,153,0.3); box-shadow: 0 0 20px rgba(16,185,129,0.15); }
+
+        .card-amber {
+            border-top-color: #fbbf24;
+            background: linear-gradient(180deg, rgba(245,158,11,0.08) 0%, rgba(10,10,15,0.95) 100%);
         }
-        
-        .shine {
-            position: relative;
-            overflow: hidden;
+        .card-amber:hover { box-shadow: 0 12px 48px rgba(245,158,11,0.2), 0 0 0 1px rgba(245,158,11,0.15); }
+        .card-amber .icon-box { background: rgba(245,158,11,0.15); border-color: rgba(251,191,36,0.3); box-shadow: 0 0 20px rgba(245,158,11,0.15); }
+
+        .icon-box {
+            width: 48px; height: 48px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; flex-shrink: 0; border: 1px solid;
+            transition: all 0.3s;
         }
-        
-        .shine::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.6s;
-        }
-        
-        .shine:hover::before {
-            left: 100%;
-        }
+        .feature-card:hover .icon-box { transform: scale(1.1); }
+
+        .stat-item { border-right: 1px solid rgba(255,255,255,0.06); }
+        .stat-item:last-child { border-right: none; }
+
+        .hero-badge { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
     </style>
 </head>
-<body class="bg-black text-white min-h-screen grid-pattern">
-    <!-- Animated Background Blobs -->
-    <div class="fixed inset-0 pointer-events-none overflow-hidden">
-        <div class="blob-1 absolute -top-40 -right-40 w-[900px] h-[900px] bg-gradient-to-br from-violet-600/40 via-purple-600/30 to-fuchsia-600/40 blur-[120px]"></div>
-        <div class="blob-2 absolute -bottom-40 -left-40 w-[800px] h-[800px] bg-gradient-to-tr from-blue-600/40 via-cyan-600/30 to-indigo-600/40 blur-[120px]"></div>
-        <div class="blob-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-br from-pink-600/30 via-rose-600/25 to-orange-600/30 blur-[120px]"></div>
-    </div>
+<body class="text-white min-h-screen">
+    <div class="ambient-glow"></div>
 
-    <!-- Navigation -->
-    <nav class="relative z-10 px-8 py-6 flex items-center justify-between">
-        <div class="text-sm font-bold tracking-[0.3em] text-white/90 fade-in">CODE ANATOMY</div>
-        <div class="flex items-center gap-8 fade-in delay-100">
-            <a href="#" class="text-sm text-white/50 hover:text-white transition-colors duration-300">Documentation</a>
-            <a href="https://github.com/viktorexe/codeanatomy" target="_blank" class="text-sm text-white/50 hover:text-white transition-colors duration-300">github.com/viktorexe/codeanatomy</a>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <main class="relative z-10 flex items-center justify-center min-h-[calc(100vh-100px)] px-8">
-        <div class="max-w-5xl mx-auto text-center">
-            <!-- Badge -->
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-effect mb-8 fade-in delay-200">
-                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span class="text-xs font-medium text-white/70">Powered by Groq AI</span>
+    <div class="relative z-10">
+        <!-- Nav -->
+        <nav class="flex items-center justify-between px-8 lg:px-16 py-5 border-b border-white/[0.06]">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M16 18L22 12L16 6"/><path d="M8 6L2 12L8 18"/></svg>
+                </div>
+                <span class="text-sm font-bold tracking-wide">CODE ANATOMY</span>
             </div>
+            <div class="flex items-center gap-8">
+                <a href="https://github.com/viktorexe/codeanatomy" target="_blank" class="text-xs text-white/40 hover:text-white/80 transition-colors font-medium">GitHub</a>
+                <span class="text-xs text-white/20 font-mono">v1.0</span>
+            </div>
+        </nav>
 
-            <!-- Main Heading -->
-            <h1 class="text-7xl md:text-8xl font-bold tracking-tight mb-6 fade-in delay-300">
-                <span class="gradient-text">Intelligent Code</span><br>
-                <span class="gradient-text">Documentation</span>
+        <!-- Hero -->
+        <section class="px-8 lg:px-16 pt-20 pb-16 max-w-5xl">
+            <div class="hero-badge inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] mb-6">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                <span class="text-[11px] font-semibold text-emerald-400/80">Powered by Groq AI · LLaMA 3.3 70B</span>
+            </div>
+            <h1 class="text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-5">
+                <span class="text-white">Understand your code.</span><br>
+                <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent">Not just read it.</span>
             </h1>
-
-            <!-- Subheading -->
-            <p class="text-xl md:text-2xl text-white/40 font-light max-w-3xl mx-auto mb-12 leading-relaxed fade-in delay-400">
-                Transform uncommented code into professionally documented software.
-                <span class="text-white/60">Enterprise-grade accuracy. Instant results.</span>
+            <p class="text-lg text-white/35 max-w-2xl leading-relaxed font-light">
+                AI-powered code documentation, flow visualization, and complexity analysis.<br>
+                <span class="text-white/50">Built for developers who care about code quality.</span>
             </p>
+        </section>
 
-            <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 fade-in delay-400">
-                <button id="addCommentsBtn" class="group relative px-8 py-4 bg-white text-black font-semibold rounded-xl btn-hover shine overflow-hidden">
-                    <span class="relative z-10 flex items-center gap-3">
-                        Add Comments
-                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                    </span>
-                </button>
-                <button id="removeCommentsBtn" class="px-8 py-4 glass-effect text-white/90 font-semibold rounded-xl btn-hover">
-                    Remove Comments
-                </button>
-            </div>
+        <!-- Feature Cards -->
+        <section class="px-8 lg:px-16 pb-20">
+            <div class="text-[10px] font-bold uppercase tracking-[3px] text-white/20 mb-5">Tools</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
 
-            <!-- Stats -->
-            <div class="grid grid-cols-2 gap-8 max-w-xl mx-auto fade-in delay-400">
-                <div class="glass-effect rounded-2xl p-6 glow-effect">
-                    <div class="text-3xl font-bold mb-1">&lt;2s</div>
-                    <div class="text-sm text-white/40">Processing Time</div>
+                <div class="feature-card card-indigo rounded-xl p-6" id="cardAddComments">
+                    <div class="flex items-start justify-between mb-5">
+                        <div class="icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        </div>
+                        <svg class="card-arrow w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+                    </div>
+                    <h3 class="text-[15px] font-semibold mb-1.5 text-white/90">Smart Comments</h3>
+                    <p class="text-xs text-white/30 leading-relaxed">Add intelligent, context-aware comments to your code using AI.</p>
                 </div>
-                <div class="glass-effect rounded-2xl p-6 glow-effect">
-                    <div class="text-3xl font-bold mb-1">2+</div>
-                    <div class="text-sm text-white/40">Languages</div>
+
+                <div class="feature-card card-rose rounded-xl p-6" id="cardRemoveComments">
+                    <div class="flex items-start justify-between mb-5">
+                        <div class="icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="1.5"><path d="M5 12h14"/><circle cx="12" cy="12" r="10"/></svg>
+                        </div>
+                        <svg class="card-arrow w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+                    </div>
+                    <h3 class="text-[15px] font-semibold mb-1.5 text-white/90">Remove Comments</h3>
+                    <p class="text-xs text-white/30 leading-relaxed">Strip all comments while preserving strings and code structure.</p>
+                </div>
+
+                <div class="feature-card card-emerald rounded-xl p-6" id="cardVisualize">
+                    <div class="flex items-start justify-between mb-5">
+                        <div class="icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="8" y="14" width="8" height="7" rx="1"/><path d="M6.5 10V12.5L12 14M17.5 10V12.5L12 14"/></svg>
+                        </div>
+                        <svg class="card-arrow w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+                    </div>
+                    <h3 class="text-[15px] font-semibold mb-1.5 text-white/90">Visualize Flow</h3>
+                    <p class="text-xs text-white/30 leading-relaxed">Generate interactive flowcharts from your code logic.</p>
+                </div>
+
+                <div class="feature-card card-amber rounded-xl p-6" id="cardComplexity">
+                    <div class="flex items-start justify-between mb-5">
+                        <div class="icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke-linejoin="round"/></svg>
+                        </div>
+                        <svg class="card-arrow w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+                    </div>
+                    <h3 class="text-[15px] font-semibold mb-1.5 text-white/90">Complexity Analysis</h3>
+                    <p class="text-xs text-white/30 leading-relaxed">Get Big-O time & space complexity with optimization tips.</p>
                 </div>
             </div>
-        </div>
-    </main>
+        </section>
 
-    <!-- Bottom Gradient Line -->
-    <div class="fixed bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+        <!-- Stats Bar -->
+        <section class="mx-8 lg:mx-16 border-t border-b border-white/[0.06]">
+            <div class="grid grid-cols-4">
+                <div class="stat-item py-6 px-4 text-center">
+                    <div class="text-xl font-bold text-white/80 font-mono">&lt;2s</div>
+                    <div class="text-[10px] text-white/25 font-medium mt-1 uppercase tracking-wider">Response Time</div>
+                </div>
+                <div class="stat-item py-6 px-4 text-center">
+                    <div class="text-xl font-bold text-white/80">Python & C</div>
+                    <div class="text-[10px] text-white/25 font-medium mt-1 uppercase tracking-wider">Languages</div>
+                </div>
+                <div class="stat-item py-6 px-4 text-center">
+                    <div class="text-xl font-bold text-white/80">4</div>
+                    <div class="text-[10px] text-white/25 font-medium mt-1 uppercase tracking-wider">Analysis Tools</div>
+                </div>
+                <div class="stat-item py-6 px-4 text-center">
+                    <div class="text-xl font-bold text-white/80">Auto-Detect</div>
+                    <div class="text-[10px] text-white/25 font-medium mt-1 uppercase tracking-wider">Language</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="px-8 lg:px-16 py-8 flex items-center justify-between">
+            <span class="text-[11px] text-white/20">© 2025 Code Anatomy</span>
+            <a href="https://github.com/viktorexe/codeanatomy" target="_blank" class="text-[11px] text-white/20 hover:text-white/50 transition-colors">github.com/viktorexe/codeanatomy</a>
+        </footer>
+    </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

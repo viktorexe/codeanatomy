@@ -273,12 +273,13 @@ body {
     overflow: hidden;
     pointer-events: none;
     border-right: 1px solid var(--border);
+    white-space: pre;
 }
 
 .code-area {
     flex: 1;
     background: transparent;
-    color: transparent;
+    color: var(--text);
     caret-color: var(--accent);
     border: none;
     padding: 1rem 1rem 1rem 70px;
@@ -295,6 +296,10 @@ body {
     overflow-wrap: normal;
     position: relative;
     z-index: 2;
+}
+
+.code-area.has-highlight {
+    color: transparent;
     -webkit-text-fill-color: transparent;
 }
 

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from groq import Groq
 import os
+import json
 
 app = Flask(__name__)
 
@@ -17,6 +18,167 @@ def home():
 @app.route('/editor')
 def editor():
     return render_template('editor.html')
+
+@app.route('/anatomy')
+def anatomy():
+    return render_template('anatomy.html')
+
+@app.route('/api/analyze-code', methods=['POST'])
+def analyze_code():
+    """API endpoint to analyze code and generate a Mermaid flowchart"""
+    try:
+        data = request.json
+        code = data.get('code', '')
+        language = data.get('language', '')
+
+        if not code or not language:
+            return jsonify({'success': False, 'error': 'Code and language are required'})
+
+        if len(code) > 500000:
+            return jsonify({'success': False, 'error': 'Code too large. Maximum 500KB allowed'})
+
+        prompt = f"""Analyze this {language} code and generate a Mermaid.js flowchart that visualizes its structure and logic flow.
+
+STRICT SYNTAX RULES — follow exactly:
+1. First line MUST be: flowchart TD
+2. Node IDs must be simple alphanumeric: A, B, C1, D2 etc.
+3. ALL labels MUST be in double quotes inside brackets:
+   - Process: A["Process description"]
+   - Decision: B{{"Is x greater than 0?"}}
+   - Function: C["function_name()"]
+   - Start: S(("Start"))
+   - End: E(("End"))
+   - Loop: F["Loop: iterate over items"]
+4. Connections: A --> B or A -->|"label"| B
+5. Use subgraph for classes or logical groups:
+   subgraph title
+   direction TB
+   ...
+   end
+6. Maximum 25 nodes for readability
+7. Return ONLY the Mermaid code — no markdown fences, no explanations, no extra text
+
+CONTENT RULES:
+1. Show the main execution flow of the program
+2. Show function definitions and how they connect
+3. Show conditionals as diamond decision nodes
+4. Show loops with descriptive labels
+5. Use concise English labels describing WHAT happens
+6. Do NOT use special characters outside of quotes
+
+Code:
+{code}"""
+
+        client = get_groq_client()
+        response = client.chat.completions.create(
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }],
+            model="llama-3.3-70b-versatile",
+            temperature=0.2,
+            max_tokens=4000
+        )
+
+        mermaid_code = response.choices[0].message.content.strip()
+
+        # Remove markdown code blocks if present
+        if mermaid_code.startswith('```'):
+            lines = mermaid_code.split('\n')
+            if lines[0].startswith('```'):
+                lines = lines[1:]
+            if lines and lines[-1].strip() == '```':
+                lines = lines[:-1]
+            mermaid_code = '\n'.join(lines)
+
+        return jsonify({'success': True, 'mermaid_code': mermaid_code})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/analysis')
+def analysis():
+    return render_template('analysis.html')
+
+@app.route('/api/analyze-complexity', methods=['POST'])
+def analyze_complexity():
+    """API endpoint to analyze code complexity, algorithm, and optimization tips"""
+    try:
+        data = request.json
+        code = data.get('code', '')
+        language = data.get('language', '')
+
+        if not code or not language:
+            return jsonify({'success': False, 'error': 'Code and language are required'})
+
+        if len(code) > 500000:
+            return jsonify({'success': False, 'error': 'Code too large. Maximum 500KB allowed'})
+
+        prompt = f"""Analyze this {language} code and provide a detailed complexity analysis.
+
+Return your response as valid JSON with exactly this structure (no markdown, no extra text):
+{{
+    "algorithm": "Name of the algorithm or technique used (e.g. Binary Search, BFS, Dynamic Programming, Brute Force, etc.)",
+    "algorithmDescription": "One sentence explaining what the algorithm does in this code",
+    "timeComplexity": {{
+        "notation": "O(...)",
+        "best": "O(...)",
+        "average": "O(...)",
+        "worst": "O(...)",
+        "explanation": "2-3 sentences explaining why this is the time complexity"
+    }},
+    "spaceComplexity": {{
+        "notation": "O(...)",
+        "explanation": "2-3 sentences explaining the space usage"
+    }},
+    "tips": [
+        "Specific actionable optimization tip 1",
+        "Specific actionable optimization tip 2",
+        "Specific actionable optimization tip 3"
+    ],
+    "rating": "efficient/moderate/inefficient"
+}}
+
+RULES:
+1. Return ONLY valid JSON, no markdown fences, no explanations outside JSON
+2. Be specific about the Big-O notation
+3. Provide 3-5 practical optimization tips
+4. The rating should be: "efficient", "moderate", or "inefficient"
+5. If there are multiple functions, analyze the overall program complexity
+
+Code:
+{code}"""
+
+        client = get_groq_client()
+        response = client.chat.completions.create(
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }],
+            model="llama-3.3-70b-versatile",
+            temperature=0.2,
+            max_tokens=4000
+        )
+
+        result = response.choices[0].message.content.strip()
+
+        # Remove markdown code blocks if present
+        if result.startswith('```'):
+            lines = result.split('\n')
+            if lines[0].startswith('```'):
+                lines = lines[1:]
+            if lines and lines[-1].strip() == '```':
+                lines = lines[:-1]
+            result = '\n'.join(lines)
+
+        analysis = json.loads(result)
+        return jsonify({'success': True, 'analysis': analysis})
+
+    except json.JSONDecodeError:
+        return jsonify({'success': True, 'analysis': None, 'raw': result, 'error': 'AI returned invalid JSON'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 
 @app.route('/api/add-comments', methods=['POST'])
 def add_comments():
@@ -111,106 +273,127 @@ def remove_comments():
 
 def remove_comments_logic(code, language):
     """Remove comments from Python or C code while preserving strings"""
-    lines = code.split('\n')
-    result = []
-    
     if language == 'python':
-        in_multiline = False
-        for line in lines:
-            stripped = line.lstrip()
-            
-            # Handle multiline strings/comments
-            if '"""' in line or "'''" in line:
-                quote = '"""' if '"""' in line else "'''"
-                count = line.count(quote)
-                if count == 2:  # Single line docstring
-                    continue
-                elif count == 1:
-                    in_multiline = not in_multiline
-                    continue
-            
-            if in_multiline:
-                continue
-            
-            # Skip lines that are only comments
-            if stripped.startswith('#'):
-                continue
-            
-            # Handle inline comments (preserve strings with #)
-            if '#' in line:
-                in_string = False
-                quote_char = None
-                new_line = []
-                i = 0
-                while i < len(line):
-                    char = line[i]
-                    
-                    # Track string state
-                    if char in ['"', "'"] and (i == 0 or line[i-1] != '\\'):
-                        if not in_string:
-                            in_string = True
-                            quote_char = char
-                        elif char == quote_char:
-                            in_string = False
-                            quote_char = None
-                    
-                    # If we hit # outside string, stop
-                    if char == '#' and not in_string:
-                        break
-                    
-                    new_line.append(char)
+        result = []
+        state = 'NORMAL'
+        i = 0
+        n = len(code)
+        while i < n:
+            if state == 'NORMAL':
+                if code[i] == '#':
+                    state = 'COMMENT'
+                elif code[i:i+3] == '"""':
+                    state = 'STR_MD'
+                    result.append('"""')
+                    i += 2
+                elif code[i:i+3] == "'''":
+                    state = 'STR_MS'
+                    result.append("'''")
+                    i += 2
+                elif code[i] == '"':
+                    state = 'STR_D'
+                    result.append('"')
+                elif code[i] == "'":
+                    state = 'STR_S'
+                    result.append("'")
+                else:
+                    result.append(code[i])
+            elif state == 'COMMENT':
+                if code[i] == '\n':
+                    state = 'NORMAL'
+                    result.append('\n')
+            elif state == 'STR_S':
+                result.append(code[i])
+                if code[i] == '\\' and i + 1 < n:
+                    result.append(code[i+1])
                     i += 1
-                
-                line = ''.join(new_line).rstrip()
+                elif code[i] == "'":
+                    state = 'NORMAL'
+            elif state == 'STR_D':
+                result.append(code[i])
+                if code[i] == '\\' and i + 1 < n:
+                    result.append(code[i+1])
+                    i += 1
+                elif code[i] == '"':
+                    state = 'NORMAL'
+            elif state == 'STR_MS':
+                result.append(code[i])
+                if code[i] == '\\' and i + 1 < n:
+                    result.append(code[i+1])
+                    i += 1
+                elif code[i:i+3] == "'''":
+                    result.append("''")
+                    i += 2
+                    state = 'NORMAL'
+            elif state == 'STR_MD':
+                result.append(code[i])
+                if code[i] == '\\' and i + 1 < n:
+                    result.append(code[i+1])
+                    i += 1
+                elif code[i:i+3] == '"""':
+                    result.append('""')
+                    i += 2
+                    state = 'NORMAL'
+            i += 1
             
-            if line.strip():  # Only add non-empty lines
-                result.append(line)
-    
+        final_lines = []
+        for line in "".join(result).split('\n'):
+            if line.strip():
+                final_lines.append(line.rstrip())
+        return '\n'.join(final_lines)
+
     elif language == 'c':
-        in_multiline = False
-        for line in lines:
-            stripped = line.lstrip()
-            
-            # Handle multiline comments
-            if '/*' in line and '*/' in line:
-                # Single line comment
-                before = line.split('/*')[0]
-                after = line.split('*/')[-1]
-                line = before + after
-            elif '/*' in line:
-                in_multiline = True
-                line = line.split('/*')[0]
-            elif '*/' in line:
-                in_multiline = False
-                line = line.split('*/')[-1]
-            elif in_multiline:
-                continue
-            
-            # Handle single line comments (preserve strings with //)
-            if '//' in line:
-                in_string = False
-                new_line = []
-                i = 0
-                while i < len(line):
-                    char = line[i]
-                    
-                    # Track string state
-                    if char == '"' and (i == 0 or line[i-1] != '\\'):
-                        in_string = not in_string
-                    
-                    # If we hit // outside string, stop
-                    if i < len(line) - 1 and char == '/' and line[i+1] == '/' and not in_string:
-                        break
-                    
-                    new_line.append(char)
+        result = []
+        state = 'NORMAL'
+        i = 0
+        n = len(code)
+        while i < n:
+            if state == 'NORMAL':
+                if code[i:i+2] == '//':
+                    state = 'LINE_COMMENT'
                     i += 1
-                
-                line = ''.join(new_line).rstrip()
+                elif code[i:i+2] == '/*':
+                    state = 'BLOCK_COMMENT'
+                    i += 1
+                elif code[i] == '"':
+                    state = 'STR'
+                    result.append('"')
+                elif code[i] == "'":
+                    state = 'CHAR'
+                    result.append("'")
+                else:
+                    result.append(code[i])
+            elif state == 'LINE_COMMENT':
+                if code[i] == '\n':
+                    state = 'NORMAL'
+                    result.append('\n')
+            elif state == 'BLOCK_COMMENT':
+                if code[i:i+2] == '*/':
+                    state = 'NORMAL'
+                    i += 1
+            elif state == 'STR':
+                result.append(code[i])
+                if code[i] == '\\' and i + 1 < n:
+                    result.append(code[i+1])
+                    i += 1
+                elif code[i] == '"':
+                    state = 'NORMAL'
+            elif state == 'CHAR':
+                result.append(code[i])
+                if code[i] == '\\' and i + 1 < n:
+                    result.append(code[i+1])
+                    i += 1
+                elif code[i] == "'":
+                    state = 'NORMAL'
+            i += 1
             
-            if line.strip():  # Only add non-empty lines
-                result.append(line)
-    
-    return '\n'.join(result)
+        final_lines = []
+        for line in "".join(result).split('\n'):
+            if line.strip():
+                final_lines.append(line.rstrip())
+        return '\n'.join(final_lines)
+
+    return code
 
 if __name__ == '__main__':
     app.run(debug=True)

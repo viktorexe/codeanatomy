@@ -42,15 +42,20 @@ function showError(message) {
 
 // Syntax highlighting with highlight.js
 function highlightCode(code, lang, targetElement) {
+    // Find the sibling textarea in the same pane
+    const pane = targetElement.closest('.editor-content');
+    const textarea = pane ? pane.querySelector('textarea') : null;
     if (!code) {
         targetElement.innerHTML = '<code></code>';
+        if (textarea) textarea.classList.remove('has-highlight');
         return;
     }
     const codeElement = targetElement.querySelector('code');
     codeElement.textContent = code;
     codeElement.className = `language-${lang}`;
-    delete codeElement.dataset.highlighted; // Reset highlight.js state for re-highlighting
+    delete codeElement.dataset.highlighted;
     hljs.highlightElement(codeElement);
+    if (textarea) textarea.classList.add('has-highlight');
 }
 
 // Navigate back to home
@@ -291,8 +296,22 @@ processBtn.addEventListener('click', async () => {
     }
 });
 
+// Auto-detect language on paste
+codeInput.addEventListener('paste', () => {
+    setTimeout(() => {
+        if (!languageSelect.value && codeInput.value.trim()) {
+            const detected = detectLanguage(codeInput.value);
+            if (detected) {
+                languageSelect.value = detected;
+                languageSelect.dispatchEvent(new Event('change'));
+                statusText.textContent = `${detected.toUpperCase()} auto-detected`;
+            }
+        }
+    }, 50);
+});
+
 // Initialize
-codeInput.disabled = true;
+codeInput.placeholder = '// Paste code here — language will be auto-detected...';
 lineNumbers1.textContent = '1';
 lineNumbers2.textContent = '1';
 codeHighlight1.innerHTML = '<code></code>';

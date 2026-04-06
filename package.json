@@ -1,0 +1,6 @@
+{
+  "name": "codeanatomy",
+  "version": "1.0.0",
+  "description": "Intelligent code documentation system powered by Groq AI",
+  "private": true
+}
