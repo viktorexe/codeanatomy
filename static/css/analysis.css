@@ -58,8 +58,8 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(
 .code-highlight .hljs-title { color: #7dcfff; font-weight: 600; }
 
 /* Results Pane */
-.results-pane { display: flex; flex-direction: column; background: var(--bg-dark); }
-.results-content { flex: 1; overflow-y: auto; padding: 1.5rem; }
+.results-pane { display: flex; flex-direction: column; background: var(--bg-dark); overflow: hidden; min-height: 0; }
+.results-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 1.5rem; min-height: 0; }
 .results-content::-webkit-scrollbar { width: 8px; }
 .results-content::-webkit-scrollbar-track { background: var(--bg-dark); }
 .results-content::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 4px; }

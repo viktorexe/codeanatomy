@@ -25,7 +25,7 @@ def anatomy():
 
 @app.route('/api/analyze-code', methods=['POST'])
 def analyze_code():
-    """API endpoint to analyze code and generate a Mermaid flowchart"""
+    """API endpoint to analyze code and generate a comprehensive Mermaid flowchart + detailed algorithm"""
     try:
         data = request.json
         code = data.get('code', '')
@@ -37,76 +37,128 @@ def analyze_code():
         if len(code) > 500000:
             return jsonify({'success': False, 'error': 'Code too large. Maximum 500KB allowed'})
 
-        prompt = f"""Analyze this {language} code and return a JSON object (no markdown fences, no extra text) with exactly these two fields:
+        client = get_groq_client()
 
-{{
-  "mermaid": "<Mermaid flowchart code here>",
-  "algorithm": "<Step-by-step algorithm here>"
-}}
+        # ── CALL 1: Comprehensive Mermaid Flowchart ──
+        mermaid_prompt = f"""You are an expert software architect. Generate a COMPREHENSIVE, HIGHLY DETAILED Mermaid.js flowchart for this {language} code.
 
-MERMAID RULES:
-1. First line MUST be: flowchart TD
-2. Node IDs must be simple alphanumeric: A, B, C1, D2 etc.
-3. ALL labels MUST be in double quotes inside brackets:
-   - Process: A["Process description"]
-   - Decision: B{{"Is condition true?"}}
-   - Start: S(("Start"))
-   - End: E(("End"))
-4. Connections: A --> B or A -->|"label"| B
-5. Maximum 20 nodes for readability
-6. No special characters outside of quotes
+Cover EVERYTHING:
+- Every function/method definition (use subgraph for each)
+- Every class and route handler
+- Every if/elif/else branch as diamond decision nodes with True/False paths
+- Every loop (for/while) showing iterate and exit edges
+- Every return statement labeled with what is returned
+- Every try/except/error path
+- Every external call (API, DB, etc.)
+- Inter-function call relationships
 
-ALGORITHM RULES:
-Write a clear numbered step-by-step algorithm in plain English. Format like:
-Algorithm: <Name of Algorithm>
-
-Step 1: <what happens>
-Step 2: <what happens>
-  Step 2.1: <sub-step if needed>
-  Step 2.2: <sub-step if needed>
-Step 3: <what happens>
-...
-
-Be specific, concise, and cover the full logic of the code.
+MERMAID SYNTAX RULES (follow exactly):
+1. First line: flowchart TD
+2. Node IDs: simple alphanumeric only (A, B, FnSort, RouteHome)
+3. Labels ALWAYS in double quotes:
+   - Process: A["description"]
+   - Decision: B{{"condition?"}}
+   - Start/End: S(("Start"))  E(("End"))
+   - I/O: IO[/"input or output"/]
+4. Edges: A --> B  or  A -->|"label"| B
+5. Group each function/route in a subgraph:
+   subgraph FnName["function_name(params)"]
+   direction TB
+   ...
+   end
+6. Connect subgraphs to show function call chains
+7. NO node count limit - be as detailed as the code requires
+8. Return ONLY raw Mermaid code. No ``` fences, no explanation.
 
 Code:
 {code}"""
 
-        client = get_groq_client()
-        response = client.chat.completions.create(
-            messages=[{
-                "role": "user",
-                "content": prompt
-            }],
+        mermaid_response = client.chat.completions.create(
+            messages=[{{"role": "user", "content": mermaid_prompt}}],
             model="llama-3.3-70b-versatile",
-            temperature=0.2,
-            max_tokens=4000
+            temperature=0.1,
+            max_tokens=7000
         )
+        mermaid_raw = mermaid_response.choices[0].message.content.strip()
 
-        raw = response.choices[0].message.content.strip()
+        # Strip any markdown fences
+        if '```' in mermaid_raw:
+            cleaned = [l for l in mermaid_raw.split('\n') if not l.strip().startswith('```')]
+            mermaid_raw = '\n'.join(cleaned).strip()
+        if not mermaid_raw.startswith('flowchart') and not mermaid_raw.startswith('graph'):
+            mermaid_raw = 'flowchart TD\n' + mermaid_raw
 
-        # Remove markdown code blocks if present
-        if raw.startswith('```'):
-            lines = raw.split('\n')
-            if lines[0].startswith('```'):
-                lines = lines[1:]
-            if lines and lines[-1].strip() == '```':
-                lines = lines[:-1]
-            raw = '\n'.join(lines)
+        # ── CALL 2: Exhaustive Step-by-Step Algorithm ──
+        algo_prompt = f"""You are an expert computer scientist. Write a COMPREHENSIVE, EXHAUSTIVE step-by-step algorithm document for this {language} code.
 
-        try:
-            parsed = json.loads(raw)
-            mermaid_code = parsed.get('mermaid', '').strip()
-            algorithm_steps = parsed.get('algorithm', '').strip()
-        except json.JSONDecodeError:
-            # Fallback: treat entire response as mermaid code
-            mermaid_code = raw
-            algorithm_steps = ''
+You MUST cover:
+1. An OVERVIEW paragraph (3-5 sentences) describing the full program
+2. For EVERY function/method/route — a dedicated section:
+   - Its purpose
+   - Parameters (name, type, meaning)
+   - Return value
+   - Full numbered steps covering ALL logic in the function
+   - Sub-steps for complex conditionals and loops
+   - Edge cases and error handling
+3. Data Flow section
+4. Error Handling summary
 
-        return jsonify({'success': True, 'mermaid_code': mermaid_code, 'algorithm_steps': algorithm_steps})
+FORMAT:
+
+Algorithm: [Name]
+
+Overview:
+[paragraph]
+
+=== FUNCTION: name(params) ===
+Purpose: ...
+Parameters:
+  - param (type): description
+Returns: ...
+
+Steps:
+Step 1: ...
+Step 2: ...
+  Step 2.1: ...
+  Step 2.2: ...
+Step 3: ...
+
+Edge Cases:
+- ...
+
+[Repeat for EVERY function]
+
+=== DATA FLOW ===
+...
+
+=== ERROR HANDLING ===
+...
+
+RULES:
+- Reference actual variable names and values from the code
+- Do not skip any function — cover ALL of them
+- Include inline Big-O notes where relevant
+- Be precise and exhaustive, not vague
+
+Code:
+{code}"""
+
+        algo_response = client.chat.completions.create(
+            messages=[{{"role": "user", "content": algo_prompt}}],
+            model="llama-3.3-70b-versatile",
+            temperature=0.1,
+            max_tokens=7000
+        )
+        algorithm_steps = algo_response.choices[0].message.content.strip()
+
+        return jsonify({{
+            'success': True,
+            'mermaid_code': mermaid_raw,
+            'algorithm_steps': algorithm_steps
+        }})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return jsonify({{'success': False, 'error': str(e)}})
 
 @app.route('/analysis')
 def analysis():

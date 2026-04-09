@@ -242,39 +242,79 @@ async function renderDiagram(code) {
     }
 }
 
-// ── Render algorithm steps ──
+// ── Render algorithm steps (rich format) ──
 function renderAlgorithmSteps(text) {
-    if (!text) { algorithmDisplay.innerHTML = '<p style="color:rgba(255,255,255,0.3)">No algorithm steps available.</p>'; return; }
+    if (!text) { algorithmDisplay.innerHTML = '<p style="color:rgba(255,255,255,0.3);padding:1rem">No algorithm steps available.</p>'; return; }
 
     const lines = text.split('\n');
     let html = '';
+
     lines.forEach(line => {
         const trimmed = line.trim();
-        if (!trimmed) { html += '<div style="height:8px"></div>'; return; }
+        if (!trimmed) { html += '<div style="height:6px"></div>'; return; }
 
-        // Algorithm title
-        if (trimmed.startsWith('Algorithm:')) {
-            html += `<div class="algo-title">${trimmed}</div>`;
+        // Main title: "Algorithm: ..."
+        if (trimmed.startsWith('Algorithm:') && !line.match(/^===/) && !trimmed.startsWith('Step')) {
+            html += `<div class="algo-title">${escHtml(trimmed)}</div>`;
         }
-        // Sub-steps (indented)
-        else if (line.match(/^\s{2,}Step/i) || line.match(/^\s{2,}\d+\.\d+/)) {
-            html += `<div class="algo-substep">${trimmed}</div>`;
+        // Section headers: === FUNCTION: ... === or === DATA FLOW === etc.
+        else if (trimmed.startsWith('===') && trimmed.endsWith('===')) {
+            html += `<div class="algo-section-header">${escHtml(trimmed.replace(/===/g, '').trim())}</div>`;
         }
-        // Main steps
-        else if (trimmed.match(/^Step\s*\d+/i) || trimmed.match(/^\d+\./)) {
-            const stepNum = trimmed.match(/^(Step\s*\d+[\.:]) ?(.*)$/i);
-            if (stepNum) {
-                html += `<div class="algo-step"><span class="step-num">${stepNum[1]}</span><span class="step-text">${stepNum[2]}</span></div>`;
-            } else {
-                html += `<div class="algo-step">${trimmed}</div>`;
+        // "Overview:" label
+        else if (trimmed === 'Overview:') {
+            html += `<div class="algo-field-label">Overview</div>`;
+        }
+        // "Steps:" label
+        else if (trimmed === 'Steps:') {
+            html += `<div class="algo-field-label" style="margin-top:8px">Steps</div>`;
+        }
+        // "Edge Cases:" label
+        else if (trimmed === 'Edge Cases:') {
+            html += `<div class="algo-field-label" style="color:#fb7185;margin-top:8px">Edge Cases</div>`;
+        }
+        // "Parameters:" or "Returns:" labels
+        else if (trimmed.match(/^(Parameters|Returns|Purpose):/)) {
+            const colon = trimmed.indexOf(':');
+            const label = trimmed.substring(0, colon);
+            const val = trimmed.substring(colon + 1).trim();
+            html += `<div class="algo-meta"><span class="algo-meta-key">${escHtml(label)}:</span> <span class="algo-meta-val">${escHtml(val)}</span></div>`;
+        }
+        // Param lines: "  - param (type): description"
+        else if (trimmed.match(/^-\s+\w/) && line.match(/^\s{2,}/)) {
+            html += `<div class="algo-param">${escHtml(trimmed)}</div>`;
+        }
+        // Edge case bullets: "- ..." at root level
+        else if (trimmed.startsWith('- ')) {
+            html += `<div class="algo-bullet">${escHtml(trimmed.substring(2))}</div>`;
+        }
+        // Sub-steps: "  Step 2.1:" with indentation
+        else if (line.match(/^\s{2,}Step\s*\d+[\.\d]*/i)) {
+            const stepMatch = trimmed.match(/^(Step\s*[\d\.]+[:\.]?)\s*(.*)$/i);
+            if (stepMatch) {
+                html += `<div class="algo-substep"><span class="step-num">${escHtml(stepMatch[1])}</span><span class="step-text">${escHtml(stepMatch[2])}</span></div>`;
             }
         }
-        // Regular text
+        // Main steps: "Step 1: ..."
+        else if (trimmed.match(/^Step\s*\d+[:\.]?/i)) {
+            const stepMatch = trimmed.match(/^(Step\s*\d+[:\.]?)\s*(.*)$/i);
+            if (stepMatch) {
+                html += `<div class="algo-step"><span class="step-num">${escHtml(stepMatch[1])}</span><span class="step-text">${escHtml(stepMatch[2])}</span></div>`;
+            } else {
+                html += `<div class="algo-step">${escHtml(trimmed)}</div>`;
+            }
+        }
+        // Regular paragraph text
         else {
-            html += `<div class="algo-note">${trimmed}</div>`;
+            html += `<div class="algo-para">${escHtml(trimmed)}</div>`;
         }
     });
+
     algorithmDisplay.innerHTML = html;
+}
+
+function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function showAlgorithmTab() {
@@ -453,15 +493,77 @@ copyMermaidBtn.addEventListener('click', async () => {
     showSuccess('Mermaid code copied!');
 });
 
-downloadBtn.addEventListener('click', () => {
+downloadBtn.addEventListener('click', async () => {
     const svg = getSvg();
     if (!svg) return;
-    const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'code-anatomy.svg'; a.click();
-    URL.revokeObjectURL(url);
-    showSuccess('SVG downloaded!');
+
+    try {
+        // Clone the SVG and reset any pan/zoom transforms so export is clean
+        const clone = svg.cloneNode(true);
+        clone.style.transform = '';
+        clone.style.transition = '';
+
+        // Get the SVG's natural dimensions from viewBox or bounding box
+        const bbox = svg.getBBox();
+        const viewBox = svg.getAttribute('viewBox');
+        let svgW, svgH;
+        if (viewBox) {
+            const parts = viewBox.split(/[\s,]+/);
+            svgW = parseFloat(parts[2]);
+            svgH = parseFloat(parts[3]);
+        } else {
+            svgW = bbox.width || parseFloat(svg.getAttribute('width')) || 1200;
+            svgH = bbox.height || parseFloat(svg.getAttribute('height')) || 900;
+        }
+
+        // Set explicit dimensions on clone
+        clone.setAttribute('width', svgW);
+        clone.setAttribute('height', svgH);
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+        // Serialize SVG
+        const serializer = new XMLSerializer();
+        const svgStr = serializer.serializeToString(clone);
+        const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+        const svgUrl = URL.createObjectURL(svgBlob);
+
+        // Draw to canvas at 2× scale for sharpness
+        const scale2x = 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = svgW * scale2x;
+        canvas.height = svgH * scale2x;
+        const ctx = canvas.getContext('2d');
+
+        // Dark background matching the app theme
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(scale2x, scale2x);
+
+        const img = new Image();
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, svgW, svgH);
+            URL.revokeObjectURL(svgUrl);
+
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'code-anatomy-flowchart.png';
+                a.click();
+                URL.revokeObjectURL(url);
+                showSuccess('PNG downloaded!');
+            }, 'image/png');
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(svgUrl);
+            showError('PNG export failed — try copying Mermaid code instead.');
+        };
+        img.src = svgUrl;
+
+    } catch (err) {
+        console.error('Download error:', err);
+        showError('Export failed: ' + err.message);
+    }
 });
 
 // ── Auto-detect language on paste ──

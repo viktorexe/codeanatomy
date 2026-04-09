@@ -293,6 +293,78 @@ body {
     font-style: italic;
 }
 
+/* Rich format additions */
+.algo-section-header {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6366f1;
+    padding: 10px 12px 6px;
+    margin-top: 14px;
+    border-top: 1px solid rgba(99,102,241,0.2);
+    border-bottom: 1px solid rgba(99,102,241,0.1);
+    background: rgba(99,102,241,0.05);
+    border-radius: 6px 6px 0 0;
+}
+.algo-field-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    padding: 6px 12px 2px;
+    margin-top: 4px;
+}
+.algo-meta {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+}
+.algo-meta-key {
+    font-weight: 700;
+    color: #a78bfa;
+    font-size: 0.8rem;
+    min-width: 80px;
+    flex-shrink: 0;
+}
+.algo-meta-val {
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+}
+.algo-param {
+    font-size: 0.83rem;
+    color: rgba(255,255,255,0.55);
+    padding: 3px 12px 3px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    border-left: 2px solid rgba(167,139,250,0.2);
+    margin-left: 24px;
+}
+.algo-bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+}
+.algo-bullet::before {
+    content: '◆';
+    font-size: 0.5rem;
+    color: #fb7185;
+    padding-top: 5px;
+    flex-shrink: 0;
+}
+.algo-para {
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.65);
+    padding: 4px 12px;
+    line-height: 1.6;
+}
+
 /* ── Statusbar ── */
 .statusbar {
     display: flex; justify-content: space-between; align-items: center;
