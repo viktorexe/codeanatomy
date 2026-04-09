@@ -37,34 +37,37 @@ def analyze_code():
         if len(code) > 500000:
             return jsonify({'success': False, 'error': 'Code too large. Maximum 500KB allowed'})
 
-        prompt = f"""Analyze this {language} code and generate a Mermaid.js flowchart that visualizes its structure and logic flow.
+        prompt = f"""Analyze this {language} code and return a JSON object (no markdown fences, no extra text) with exactly these two fields:
 
-STRICT SYNTAX RULES — follow exactly:
+{{
+  "mermaid": "<Mermaid flowchart code here>",
+  "algorithm": "<Step-by-step algorithm here>"
+}}
+
+MERMAID RULES:
 1. First line MUST be: flowchart TD
 2. Node IDs must be simple alphanumeric: A, B, C1, D2 etc.
 3. ALL labels MUST be in double quotes inside brackets:
    - Process: A["Process description"]
-   - Decision: B{{"Is x greater than 0?"}}
-   - Function: C["function_name()"]
+   - Decision: B{{"Is condition true?"}}
    - Start: S(("Start"))
    - End: E(("End"))
-   - Loop: F["Loop: iterate over items"]
 4. Connections: A --> B or A -->|"label"| B
-5. Use subgraph for classes or logical groups:
-   subgraph title
-   direction TB
-   ...
-   end
-6. Maximum 25 nodes for readability
-7. Return ONLY the Mermaid code — no markdown fences, no explanations, no extra text
+5. Maximum 20 nodes for readability
+6. No special characters outside of quotes
 
-CONTENT RULES:
-1. Show the main execution flow of the program
-2. Show function definitions and how they connect
-3. Show conditionals as diamond decision nodes
-4. Show loops with descriptive labels
-5. Use concise English labels describing WHAT happens
-6. Do NOT use special characters outside of quotes
+ALGORITHM RULES:
+Write a clear numbered step-by-step algorithm in plain English. Format like:
+Algorithm: <Name of Algorithm>
+
+Step 1: <what happens>
+Step 2: <what happens>
+  Step 2.1: <sub-step if needed>
+  Step 2.2: <sub-step if needed>
+Step 3: <what happens>
+...
+
+Be specific, concise, and cover the full logic of the code.
 
 Code:
 {code}"""
@@ -80,18 +83,27 @@ Code:
             max_tokens=4000
         )
 
-        mermaid_code = response.choices[0].message.content.strip()
+        raw = response.choices[0].message.content.strip()
 
         # Remove markdown code blocks if present
-        if mermaid_code.startswith('```'):
-            lines = mermaid_code.split('\n')
+        if raw.startswith('```'):
+            lines = raw.split('\n')
             if lines[0].startswith('```'):
                 lines = lines[1:]
             if lines and lines[-1].strip() == '```':
                 lines = lines[:-1]
-            mermaid_code = '\n'.join(lines)
+            raw = '\n'.join(lines)
 
-        return jsonify({'success': True, 'mermaid_code': mermaid_code})
+        try:
+            parsed = json.loads(raw)
+            mermaid_code = parsed.get('mermaid', '').strip()
+            algorithm_steps = parsed.get('algorithm', '').strip()
+        except json.JSONDecodeError:
+            # Fallback: treat entire response as mermaid code
+            mermaid_code = raw
+            algorithm_steps = ''
+
+        return jsonify({'success': True, 'mermaid_code': mermaid_code, 'algorithm_steps': algorithm_steps})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

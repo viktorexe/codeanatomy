@@ -222,18 +222,75 @@ body {
     border-radius: 50%; animation: spin 0.8s linear infinite;
 }
 .diagram-container {
-    display: flex; align-items: center; justify-content: center;
-    width: 100%; height: 100%; overflow: hidden; padding: 2rem;
+    width: 100%; height: 100%; overflow: hidden; position: relative;
 }
-.diagram-container svg { transition: transform 0.15s ease-out; max-width: 100%; height: auto; }
+.diagram-container svg {
+    position: absolute; top: 0; left: 0;
+    transform-origin: 0 0;
+    transition: transform 0.12s cubic-bezier(0.25,0.46,0.45,0.94);
+}
 .mermaid-raw {
     width: 100%; height: 100%; overflow: auto; padding: 1.5rem;
 }
-.mermaid-raw pre {
-    background: var(--bg-darkest); border: 1px solid var(--border);
-    border-radius: 8px; padding: 1.5rem;
-    font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
-    line-height: 1.6; color: var(--text); white-space: pre-wrap;
+
+/* ── Algorithm Display ── */
+.algorithm-display {
+    padding: 1.5rem;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.algorithm-display::-webkit-scrollbar { width: 6px; }
+.algorithm-display::-webkit-scrollbar-track { background: transparent; }
+.algorithm-display::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 6px; }
+
+.algo-title {
+    font-size: 1rem; font-weight: 700;
+    color: #a78bfa;
+    letter-spacing: 0.02em;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(167,139,250,0.2);
+}
+.algo-step {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(99,102,241,0.06);
+    border: 1px solid rgba(99,102,241,0.1);
+    margin: 2px 0;
+    transition: background 0.2s;
+}
+.algo-step:hover { background: rgba(99,102,241,0.1); }
+.step-num {
+    font-size: 0.8rem; font-weight: 700;
+    color: #6366f1;
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 60px;
+    flex-shrink: 0;
+    padding-top: 1px;
+}
+.step-text {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.55;
+}
+.algo-substep {
+    display: flex; align-items: flex-start;
+    padding: 6px 12px 6px 32px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    border-left: 2px solid rgba(99,102,241,0.2);
+    margin-left: 12px;
+    line-height: 1.5;
+}
+.algo-note {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.45);
+    padding: 4px 12px;
+    font-style: italic;
 }
 
 /* ── Statusbar ── */

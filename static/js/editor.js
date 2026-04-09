@@ -117,8 +117,8 @@ function checkInputs() {
     processBtn.disabled = !(languageSelect.value && codeInput.value.trim());
 }
 
-// Input handler with debouncing for performance
-let inputTimeout;
+// Input handler — highlight immediately, debounce only line numbers
+let lineNumTimeout;
 codeInput.addEventListener('input', () => {
     const code = codeInput.value;
     
@@ -126,16 +126,17 @@ codeInput.addEventListener('input', () => {
         showError(`File too large! Maximum ${MAX_FILE_SIZE / 1000}KB allowed.`);
         return;
     }
-    
-    clearTimeout(inputTimeout);
-    inputTimeout = setTimeout(() => {
+
+    checkInputs();
+    statusText.textContent = 'Modified';
+    const lang = languageSelect.value;
+    if (lang) highlightCode(code, langMap[lang], codeHighlight1); // immediate — no delay
+
+    clearTimeout(lineNumTimeout);
+    lineNumTimeout = setTimeout(() => {
         updateLineNumbers(codeInput, lineNumbers1);
         updateCursorPosition();
-        checkInputs();
-        statusText.textContent = 'Modified';
-        const lang = languageSelect.value;
-        if (lang) highlightCode(code, langMap[lang], codeHighlight1);
-    }, 150); // Debounce for 150ms to avoid excessive re-renders
+    }, 100);
 });
 
 // Sync scroll positions between textarea, line numbers, and syntax highlighting

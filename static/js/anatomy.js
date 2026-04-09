@@ -39,7 +39,7 @@ const diagramPlaceholder = document.getElementById('diagramPlaceholder');
 const diagramLoading = document.getElementById('diagramLoading');
 const diagramContainer = document.getElementById('diagramContainer');
 const mermaidRaw = document.getElementById('mermaidRaw');
-const mermaidCodeDisplay = document.getElementById('mermaidCodeDisplay');
+const algorithmDisplay = document.getElementById('algorithmDisplay');
 const diagramViewBtn = document.getElementById('diagramViewBtn');
 const codeViewBtn = document.getElementById('codeViewBtn');
 const zoomInBtn = document.getElementById('zoomInBtn');
@@ -50,6 +50,7 @@ const zoomLevelEl = document.getElementById('zoomLevel');
 const MAX_FILE_SIZE = 500000;
 const langMap = { python: 'python', c: 'c' };
 let currentMermaidCode = '';
+let currentAlgorithmSteps = '';
 let scale = 1, translateX = 0, translateY = 0;
 let isDragging = false, startX = 0, startY = 0;
 let renderCount = 0;
@@ -92,7 +93,7 @@ function highlightCode(code, lang) {
     codeInput.classList.add('has-highlight');
 }
 
-// ── Line numbers ──
+// ── Line numbers (debounced separately to avoid blocking highlight) ──
 function updateLineNumbers() {
     const lines = codeInput.value.split('\n').length;
     if (lines > 5000) { lineNumbers.textContent = '...'; return; }
@@ -113,18 +114,19 @@ function updateCursorPosition() {
     } catch { lineCount.textContent = 'Ln 1, Col 1'; }
 }
 
-// ── Input handling ──
-let inputTimeout;
+// ── Input handling — highlight immediately, debounce only line numbers ──
+let lineNumTimeout;
 codeInput.addEventListener('input', () => {
     if (codeInput.value.length > MAX_FILE_SIZE) { showError('File too large!'); return; }
-    clearTimeout(inputTimeout);
-    inputTimeout = setTimeout(() => {
+    checkInputs();
+    const lang = languageSelect.value;
+    if (lang) highlightCode(codeInput.value, langMap[lang]); // immediate highlight, no delay
+
+    clearTimeout(lineNumTimeout);
+    lineNumTimeout = setTimeout(() => {
         updateLineNumbers();
         updateCursorPosition();
-        checkInputs();
-        const lang = languageSelect.value;
-        if (lang) highlightCode(codeInput.value, langMap[lang]);
-    }, 150);
+    }, 100);
 });
 
 codeInput.addEventListener('scroll', () => {
@@ -200,6 +202,7 @@ function resetDiagram() {
     diagramPlaceholder.style.display = 'flex';
     diagramLoading.style.display = 'none';
     currentMermaidCode = '';
+    currentAlgorithmSteps = '';
     scale = 1; translateX = 0; translateY = 0;
     zoomLevelEl.textContent = '100%';
     diagramViewBtn.classList.add('active');
@@ -208,7 +211,6 @@ function resetDiagram() {
 
 async function renderDiagram(code) {
     currentMermaidCode = sanitizeMermaid(code);
-    mermaidCodeDisplay.textContent = currentMermaidCode;
 
     try {
         renderCount++;
@@ -223,23 +225,64 @@ async function renderDiagram(code) {
 
         const svgEl = diagramContainer.querySelector('svg');
         if (svgEl) {
-            svgEl.style.maxWidth = '100%';
+            svgEl.style.maxWidth = 'none';
             svgEl.style.height = 'auto';
-            svgEl.style.transition = 'transform 0.15s ease-out';
+            svgEl.style.transition = 'transform 0.12s ease-out';
+            svgEl.style.transformOrigin = '0 0';
         }
         statusText.textContent = 'Analysis complete';
         fitDiagram();
     } catch (err) {
         console.error('Mermaid render error:', err);
         diagramLoading.style.display = 'none';
-        diagramPlaceholder.style.display = 'none';
-        diagramContainer.style.display = 'none';
-        mermaidRaw.style.display = 'block';
-        codeViewBtn.classList.add('active');
-        diagramViewBtn.classList.remove('active');
-        showError('Diagram render issue — raw Mermaid code shown. You can copy it to mermaid.live');
-        statusText.textContent = 'Raw code shown';
+        // On render error, fall back to algorithm view
+        showAlgorithmTab();
+        showError('Diagram render issue — showing algorithm steps instead.');
+        statusText.textContent = 'Showing algorithm';
     }
+}
+
+// ── Render algorithm steps ──
+function renderAlgorithmSteps(text) {
+    if (!text) { algorithmDisplay.innerHTML = '<p style="color:rgba(255,255,255,0.3)">No algorithm steps available.</p>'; return; }
+
+    const lines = text.split('\n');
+    let html = '';
+    lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) { html += '<div style="height:8px"></div>'; return; }
+
+        // Algorithm title
+        if (trimmed.startsWith('Algorithm:')) {
+            html += `<div class="algo-title">${trimmed}</div>`;
+        }
+        // Sub-steps (indented)
+        else if (line.match(/^\s{2,}Step/i) || line.match(/^\s{2,}\d+\.\d+/)) {
+            html += `<div class="algo-substep">${trimmed}</div>`;
+        }
+        // Main steps
+        else if (trimmed.match(/^Step\s*\d+/i) || trimmed.match(/^\d+\./)) {
+            const stepNum = trimmed.match(/^(Step\s*\d+[\.:]) ?(.*)$/i);
+            if (stepNum) {
+                html += `<div class="algo-step"><span class="step-num">${stepNum[1]}</span><span class="step-text">${stepNum[2]}</span></div>`;
+            } else {
+                html += `<div class="algo-step">${trimmed}</div>`;
+            }
+        }
+        // Regular text
+        else {
+            html += `<div class="algo-note">${trimmed}</div>`;
+        }
+    });
+    algorithmDisplay.innerHTML = html;
+}
+
+function showAlgorithmTab() {
+    codeViewBtn.classList.add('active');
+    diagramViewBtn.classList.remove('active');
+    renderAlgorithmSteps(currentAlgorithmSteps);
+    mermaidRaw.style.display = 'block';
+    diagramContainer.style.display = 'none';
 }
 
 // ── Analyze button ──
@@ -265,6 +308,7 @@ analyzeBtn.addEventListener('click', async () => {
         });
         const data = await res.json();
         if (data.success) {
+            currentAlgorithmSteps = data.algorithm_steps || '';
             await renderDiagram(data.mermaid_code);
         } else {
             showError(data.error || 'Analysis failed');
@@ -292,56 +336,115 @@ diagramViewBtn.addEventListener('click', () => {
         mermaidRaw.style.display = 'none';
     }
 });
+
 codeViewBtn.addEventListener('click', () => {
-    codeViewBtn.classList.add('active');
-    diagramViewBtn.classList.remove('active');
-    if (currentMermaidCode) {
-        mermaidRaw.style.display = 'block';
-        diagramContainer.style.display = 'none';
-    }
+    showAlgorithmTab();
 });
 
-// ── Zoom & Pan ──
-function updateTransform() {
-    const svg = diagramContainer.querySelector('svg');
+// ── ZOOM & PAN (improved) ──
+function getSvg() { return diagramContainer.querySelector('svg'); }
+
+function updateTransform(smooth = true) {
+    const svg = getSvg();
     if (!svg) return;
+    svg.style.transition = smooth ? 'transform 0.12s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none';
     svg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-    svg.style.transformOrigin = 'center center';
+    svg.style.transformOrigin = '0 0';
     zoomLevelEl.textContent = Math.round(scale * 100) + '%';
 }
 
 function fitDiagram() {
-    scale = 1; translateX = 0; translateY = 0;
+    const svg = getSvg();
+    if (!svg) return;
+    const container = diagramContent.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    const svgW = svgRect.width / scale;
+    const svgH = svgRect.height / scale;
+    const fw = container.width / svgW;
+    const fh = container.height / svgH;
+    scale = Math.min(fw, fh, 1) * 0.9;
+    translateX = (container.width - svgW * scale) / 2;
+    translateY = (container.height - svgH * scale) / 2;
     updateTransform();
 }
 
-zoomInBtn.addEventListener('click', () => { scale = Math.min(5, scale + 0.2); updateTransform(); });
-zoomOutBtn.addEventListener('click', () => { scale = Math.max(0.1, scale - 0.2); updateTransform(); });
+// Zoom toward mouse cursor position
+function zoomAt(x, y, delta) {
+    const oldScale = scale;
+    scale = Math.max(0.1, Math.min(5, scale + delta));
+    const factor = scale / oldScale;
+    translateX = x - factor * (x - translateX);
+    translateY = y - factor * (y - translateY);
+    updateTransform(false);
+}
+
+// Zoom buttons — zoom toward center of container
+zoomInBtn.addEventListener('click', () => {
+    const r = diagramContent.getBoundingClientRect();
+    zoomAt(r.width / 2, r.height / 2, 0.2);
+});
+zoomOutBtn.addEventListener('click', () => {
+    const r = diagramContent.getBoundingClientRect();
+    zoomAt(r.width / 2, r.height / 2, -0.2);
+});
 zoomResetBtn.addEventListener('click', fitDiagram);
 
+// Scroll to zoom toward cursor
 diagramContent.addEventListener('wheel', (e) => {
-    if (!diagramContainer.innerHTML) return;
+    if (!getSvg()) return;
     e.preventDefault();
-    scale = Math.max(0.1, Math.min(5, scale + (e.deltaY > 0 ? -0.1 : 0.1)));
-    updateTransform();
-});
+    const r = diagramContent.getBoundingClientRect();
+    const mouseX = e.clientX - r.left;
+    const mouseY = e.clientY - r.top;
+    const delta = e.deltaY > 0 ? -0.12 : 0.12;
+    zoomAt(mouseX, mouseY, delta);
+}, { passive: false });
 
+// Pan with mouse drag
 diagramContent.addEventListener('mousedown', (e) => {
-    if (!diagramContainer.innerHTML) return;
+    if (!getSvg()) return;
     isDragging = true;
     startX = e.clientX - translateX;
     startY = e.clientY - translateY;
     diagramContent.style.cursor = 'grabbing';
+    e.preventDefault();
 });
 window.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     translateX = e.clientX - startX;
     translateY = e.clientY - startY;
-    updateTransform();
+    updateTransform(false);
 });
 window.addEventListener('mouseup', () => {
     if (isDragging) { isDragging = false; diagramContent.style.cursor = 'grab'; }
 });
+
+// Touch pinch zoom
+let lastTouchDist = null;
+diagramContent.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+        lastTouchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+    }
+}, { passive: true });
+diagramContent.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && lastTouchDist !== null) {
+        e.preventDefault();
+        const dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        const delta = (dist - lastTouchDist) * 0.005;
+        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const r = diagramContent.getBoundingClientRect();
+        zoomAt(cx - r.left, cy - r.top, delta);
+        lastTouchDist = dist;
+    }
+}, { passive: false });
+diagramContent.addEventListener('touchend', () => { lastTouchDist = null; });
 
 // ── Copy & Download ──
 copyMermaidBtn.addEventListener('click', async () => {
@@ -351,7 +454,7 @@ copyMermaidBtn.addEventListener('click', async () => {
 });
 
 downloadBtn.addEventListener('click', () => {
-    const svg = diagramContainer.querySelector('svg');
+    const svg = getSvg();
     if (!svg) return;
     const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
@@ -379,4 +482,3 @@ codeInput.addEventListener('paste', () => {
 codeInput.placeholder = '// Paste code here — language will be auto-detected...';
 lineNumbers.textContent = '1';
 codeHighlight.innerHTML = '<code></code>';
-
