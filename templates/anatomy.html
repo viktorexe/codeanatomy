@@ -120,7 +120,12 @@
                     </div>
                     <div class="diagram-loading" id="diagramLoading" style="display:none;">
                         <div class="spinner"></div>
-                        <p>Running deep analysis — generating flowchart &amp; algorithm...</p>
+                        <h3 class="loading-title">Deep Analysis in Progress</h3>
+                        <p class="loading-status" id="loadingStatusText">Initializing AI models...</p>
+                        
+                        <div class="progress-track">
+                            <div class="progress-fill" id="loadingProgressFill"></div>
+                        </div>
                     </div>
                     <div class="diagram-container" id="diagramContainer" style="display:none;"></div>
                     <div class="mermaid-raw" id="mermaidRaw" style="display:none;">

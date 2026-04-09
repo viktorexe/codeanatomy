@@ -321,9 +321,13 @@ function showAlgorithmTab() {
     codeViewBtn.classList.add('active');
     diagramViewBtn.classList.remove('active');
     renderAlgorithmSteps(currentAlgorithmSteps);
-    mermaidRaw.style.display = 'block';
+    mermaidRaw.style.display = 'flex';
     diagramContainer.style.display = 'none';
 }
+
+const loadingStatusText = document.getElementById('loadingStatusText');
+const loadingProgressFill = document.getElementById('loadingProgressFill');
+let progressInterval;
 
 // ── Analyze button ──
 analyzeBtn.addEventListener('click', async () => {
@@ -340,6 +344,30 @@ analyzeBtn.addEventListener('click', async () => {
     diagramLoading.style.display = 'flex';
     statusText.textContent = 'Analyzing code structure...';
 
+    // Start progress bar animation
+    let progress = 0;
+    loadingProgressFill.style.width = '0%';
+    loadingStatusText.textContent = 'Initializing deep structural scan...';
+    
+    clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+        // Slow down progress as it approaches 95% to wait for real API
+        let increment = 0;
+        if (progress < 40) increment = Math.random() * 2 + 1; // Fast to 40%
+        else if (progress < 70) increment = Math.random() * 1.5; // Medium to 70%
+        else if (progress < 90) increment = Math.random() * 0.5; // Slow to 90%
+        else if (progress < 95) increment = Math.random() * 0.1; // Crawl to 95%
+        
+        progress = Math.min(95, progress + increment);
+        loadingProgressFill.style.width = progress + '%';
+        
+        // Update text dynamically based on time passed
+        if (progress > 85) loadingStatusText.textContent = 'Finalizing logic verification...';
+        else if (progress > 60) loadingStatusText.textContent = 'Writing step-by-step algorithm (Pass 2/2)...';
+        else if (progress > 30) loadingStatusText.textContent = 'Generating Mermaid flowchart (Pass 1/2)...';
+        else if (progress > 10) loadingStatusText.textContent = 'Analyzing syntax and call graphs...';
+    }, 400);
+
     try {
         const res = await fetch('/api/analyze-code', {
             method: 'POST',
@@ -347,6 +375,15 @@ analyzeBtn.addEventListener('click', async () => {
             body: JSON.stringify({ code, language })
         });
         const data = await res.json();
+        
+        // Snap to 100% when done
+        clearInterval(progressInterval);
+        loadingProgressFill.style.width = '100%';
+        loadingStatusText.textContent = 'Complete!';
+        
+        // Short delay to let user see 100% completion before UI switch
+        await new Promise(r => setTimeout(r, 600));
+
         if (data.success) {
             currentAlgorithmSteps = data.algorithm_steps || '';
             await renderDiagram(data.mermaid_code);
@@ -357,6 +394,7 @@ analyzeBtn.addEventListener('click', async () => {
             diagramPlaceholder.style.display = 'flex';
         }
     } catch (err) {
+        clearInterval(progressInterval);
         showError(err.message);
         statusText.textContent = 'Error';
         diagramLoading.style.display = 'none';
@@ -371,9 +409,15 @@ analyzeBtn.addEventListener('click', async () => {
 diagramViewBtn.addEventListener('click', () => {
     diagramViewBtn.classList.add('active');
     codeViewBtn.classList.remove('active');
+    mermaidRaw.style.display = 'none';
+    
     if (currentMermaidCode && diagramContainer.innerHTML) {
         diagramContainer.style.display = 'flex';
-        mermaidRaw.style.display = 'none';
+        diagramPlaceholder.style.display = 'none';
+    } else {
+        diagramContainer.style.display = 'none';
+        diagramPlaceholder.style.display = 'flex';
+        statusText.textContent = 'Diagram not available';
     }
 });
 

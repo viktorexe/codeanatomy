@@ -2,7 +2,9 @@ from flask import Flask, render_template, request, jsonify
 from groq import Groq
 import os
 import json
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 
 def get_groq_client():
@@ -54,21 +56,23 @@ Cover EVERYTHING:
 
 MERMAID SYNTAX RULES (follow exactly):
 1. First line: flowchart TD
-2. Node IDs: simple alphanumeric only (A, B, FnSort, RouteHome)
+2. Node IDs: simple alphanumeric only (A, B, FnSort, RouteHome). DO NOT USE PARENTHESES `()` or spaces in Node IDs.
 3. Labels ALWAYS in double quotes:
-   - Process: A["description"]
+   - Process: A["description details"]
    - Decision: B{{"condition?"}}
    - Start/End: S(("Start"))  E(("End"))
    - I/O: IO[/"input or output"/]
-4. Edges: A --> B  or  A -->|"label"| B
-5. Group each function/route in a subgraph:
+4. NEVER use double quotes (") INSIDE a label! Use single quotes (') inside labels instead. This is critical to prevent syntax errors.
+5. Edges: A --> B  or  A -->|"label"| B. (Do not use quotes inside edge labels either).
+6. Group each function/route in a subgraph:
    subgraph FnName["function_name(params)"]
    direction TB
    ...
    end
-6. Connect subgraphs to show function call chains
-7. NO node count limit - be as detailed as the code requires
-8. Return ONLY raw Mermaid code. No ``` fences, no explanation.
+   Make sure the subgraph ID (FnName) is simple alphanumeric without parentheses.
+7. Connect subgraphs to show function call chains
+8. NO node count limit - be as detailed as the code requires
+9. Return ONLY raw Mermaid code. No ``` fences, no explanation.
 
 Code:
 {code}"""
