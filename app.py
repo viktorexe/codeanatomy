@@ -74,7 +74,7 @@ Code:
 {code}"""
 
         mermaid_response = client.chat.completions.create(
-            messages=[{{"role": "user", "content": mermaid_prompt}}],
+            messages=[{"role": "user", "content": mermaid_prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.1,
             max_tokens=7000
@@ -144,21 +144,21 @@ Code:
 {code}"""
 
         algo_response = client.chat.completions.create(
-            messages=[{{"role": "user", "content": algo_prompt}}],
+            messages=[{"role": "user", "content": algo_prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.1,
             max_tokens=7000
         )
         algorithm_steps = algo_response.choices[0].message.content.strip()
 
-        return jsonify({{
+        return jsonify({
             'success': True,
             'mermaid_code': mermaid_raw,
             'algorithm_steps': algorithm_steps
-        }})
+        })
 
     except Exception as e:
-        return jsonify({{'success': False, 'error': str(e)}})
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/analysis')
 def analysis():
