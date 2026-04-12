@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from groq import Groq
+import groq as groq_sdk
 import os
 import json
 from dotenv import load_dotenv
@@ -7,11 +8,75 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 
-def get_groq_client():
-    api_key = os.environ.get('GROQ_API_KEY')
-    if not api_key:
-        raise ValueError("GROQ_API_KEY environment variable is not set")
-    return Groq(api_key=api_key, max_retries=2)
+# ── API key pool (KEY_1 is the default; 2/3/4 are fallbacks) ──
+_PLACEHOLDER_PREFIXES = ('your_', 'add_your_', 'replace_')
+
+def _get_key_pool():
+    """
+    Return all real Groq API keys in priority order (KEY_1 → KEY_4).
+    Placeholder and empty values are automatically skipped.
+    """
+    keys = []
+    for i in range(1, 5):
+        val = os.environ.get(f'GROQ_API_KEY_{i}', '').strip()
+        if val and not any(val.lower().startswith(p) for p in _PLACEHOLDER_PREFIXES):
+            keys.append((i, val))
+    if not keys:
+        raise ValueError(
+            "No valid Groq API keys found. "
+            "Set GROQ_API_KEY_1 (through _4) in your .env"
+        )
+    return keys
+
+# Exception types that indicate a key-level problem → rotate to next key
+_KEY_ERRORS = (
+    groq_sdk.RateLimitError,          # 429 — rate-limited
+    groq_sdk.AuthenticationError,     # 401 — bad/expired key
+    groq_sdk.PermissionDeniedError,   # 403 — key lacks access
+)
+
+def call_groq_with_fallback(messages, model, temperature, max_tokens):
+    """
+    Try each API key in the pool in order.
+    Rotates to the next key immediately on rate-limit / auth / permission errors.
+    Any other error (bad request, network, etc.) is raised right away.
+    Raises the last key-error if every key fails.
+    """
+    keys = _get_key_pool()
+    last_error = None
+
+    for key_num, key in keys:
+        try:
+            # max_retries=0 so the SDK hands control back to us immediately
+            # instead of silently retrying on the same exhausted key
+            client = Groq(api_key=key, max_retries=0)
+            response = client.chat.completions.create(
+                messages=messages,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            if key_num > 1:
+                app.logger.info(f"[Groq] Succeeded with key #{key_num}")
+            return response
+
+        except _KEY_ERRORS as e:
+            last_error = e
+            app.logger.warning(
+                f"[Groq] Key #{key_num} failed ({type(e).__name__}: {e}). "
+                f"Rotating to next key..."
+            )
+            continue   # try next key
+
+        except Exception:
+            raise      # non-key error — propagate immediately
+
+    # Every key was tried and failed
+    total = len(keys)
+    raise RuntimeError(
+        f"All {total} Groq API key(s) are exhausted or invalid. "
+        f"Last error: {last_error}"
+    )
 
 @app.route('/')
 def home():
@@ -38,8 +103,6 @@ def analyze_code():
 
         if len(code) > 500000:
             return jsonify({'success': False, 'error': 'Code too large. Maximum 500KB allowed'})
-
-        client = get_groq_client()
 
         # ── CALL 1: Comprehensive Mermaid Flowchart ──
         mermaid_prompt = f"""You are an expert software architect. Generate a COMPREHENSIVE, HIGHLY DETAILED Mermaid.js flowchart for this {language} code.
@@ -77,7 +140,7 @@ MERMAID SYNTAX RULES (follow exactly):
 Code:
 {code}"""
 
-        mermaid_response = client.chat.completions.create(
+        mermaid_response = call_groq_with_fallback(
             messages=[{"role": "user", "content": mermaid_prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.1,
@@ -147,7 +210,7 @@ RULES:
 Code:
 {code}"""
 
-        algo_response = client.chat.completions.create(
+        algo_response = call_groq_with_fallback(
             messages=[{"role": "user", "content": algo_prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.1,
@@ -217,12 +280,8 @@ RULES:
 Code:
 {code}"""
 
-        client = get_groq_client()
-        response = client.chat.completions.create(
-            messages=[{
-                "role": "user",
-                "content": prompt
-            }],
+        response = call_groq_with_fallback(
+            messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.2,
             max_tokens=4000
@@ -295,13 +354,9 @@ RULES:
 Code:
 {code}"""
 
-        # Call Groq AI API
-        client = get_groq_client()
-        response = client.chat.completions.create(
-            messages=[{
-                "role": "user",
-                "content": prompt
-            }],
+        # Call Groq AI API with automatic key fallback
+        response = call_groq_with_fallback(
+            messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.3,
             max_tokens=4000
